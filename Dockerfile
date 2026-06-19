@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy prisma schema
 COPY prisma ./prisma
@@ -30,7 +30,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm ci --legacy-peer-deps --only=production
 
 # Copy prisma schema
 COPY prisma ./prisma
