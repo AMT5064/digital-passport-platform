@@ -7,7 +7,7 @@ export default function NotFoundPage() {
       <div className="text-center">
         <div className="text-8xl font-bold text-white mb-4">404</div>
         <h1 className="text-4xl font-bold text-white mb-2">Page Not Found</h1>
-        <p className="text-xl text-blue-100 mb-8">The page you're looking for doesn't exist.</p>
+        <p className="text-xl text-blue-100 mb-8">The page you&apos;re looking for doesn&apos;t exist.</p>
 
         <Link href="/">
           <button className="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-gray-100 transition font-semibold">
