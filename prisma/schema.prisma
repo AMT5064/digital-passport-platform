@@ -1,0 +1,324 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  firstName     String
+  lastName      String
+  password      String?
+  mobile        String?
+  company       String?
+  designation   String?
+  avatar        String?
+  role          UserRole    @default(ATTENDEE)
+  eventId       String?
+  event         Event?      @relation("EventAttendees", fields: [eventId], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  scans         Scan[]
+  badges        Badge[]
+  logs          ActivityLog[]
+  points        PointsTransaction[]
+
+  @@index([eventId])
+  @@index([email])
+}
+
+model Admin {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  firstName     String
+  lastName      String
+  password      String
+  role          AdminRole   @default(EVENT_ADMIN)
+  eventId       String?
+  event         Event?      @relation("EventAdmins", fields: [eventId], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  auditLogs     AuditLog[]
+
+  @@index([eventId])
+  @@index([email])
+}
+
+model Event {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  startDate       DateTime
+  endDate         DateTime
+  venue           String?
+  logo            String?
+  bannerImage     String?
+  themeColor      String      @default("#3B82F6")
+  status          EventStatus @default(DRAFT)
+  attendees       User[]      @relation("EventAttendees")
+  admins          Admin[]     @relation("EventAdmins")
+  zones           Zone[]
+  activities      Activity[]
+  scans           Scan[]
+  badges          Badge[]
+  rewards         Reward[]
+  leaderboard     Leaderboard[]
+  pointsConfig    PointsConfig?
+  registrationConfig RegistrationConfig?
+  settings        EventSettings?
+  logs            ActivityLog[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([status])
+}
+
+model Zone {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  image           String?
+  qrSlug          String      @unique
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  activity        Activity?
+  scans           Scan[]
+  active          Boolean     @default(true)
+  points          Int         @default(10)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([eventId])
+  @@index([qrSlug])
+}
+
+model Activity {
+  id              String      @id @default(cuid())
+  type            ActivityType
+  zoneId          String      @unique
+  zone            Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // Quiz fields
+  question        String?
+  answers         Json?       // Array of {id, text, isCorrect}
+
+  // Poll fields
+  pollOptions     Json?       // Array of {id, text}
+
+  // Survey fields
+  surveyQuestions Json?       // Array of survey questions
+
+  // Download fields
+  downloadUrl     String?
+  downloadName    String?
+
+  // Video fields
+  videoUrl        String?
+  videoDuration   Int?        // seconds
+
+  // Custom CTA fields
+  ctaButtonText   String?
+  ctaUrl          String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([eventId])
+  @@index([zoneId])
+}
+
+model Scan {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zoneId          String
+  zone            Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  device          String?
+  browser         String?
+  ipAddress       String?
+  userAgent       String?
+  completedAt     DateTime?
+  pointsEarned    Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([zoneId])
+  @@index([eventId])
+  @@unique([userId, zoneId, eventId]) // Prevent exact duplicates
+}
+
+model ActivityLog {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zoneId          String
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  action          String
+  details         Json?
+  device          String?
+  browser         String?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([eventId])
+  @@index([createdAt])
+}
+
+model PointsTransaction {
+  id              String      @id @default(cuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId         String
+  points          Int
+  reason          String
+  metadata        Json?
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([eventId])
+}
+
+model Badge {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  icon            String?
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  users           User[]
+  createdAt       DateTime    @default(now())
+
+  @@index([eventId])
+}
+
+model Reward {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  icon            String?
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // Reward rules
+  pointsRequired  Int?
+  zonesRequired   Int?
+  activitiesRequired Int?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([eventId])
+}
+
+model Leaderboard {
+  id              String      @id @default(cuid())
+  eventId         String
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId          String
+  rank            Int
+  points          Int
+  zonesCompleted  Int
+  activitiesCompleted Int
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([points], name: "points_idx")
+}
+
+model PointsConfig {
+  id              String      @id @default(cuid())
+  eventId         String      @unique
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  pointsPerZone   Int         @default(10)
+  pointsPerQuiz   Int         @default(5)
+  pointsPerPoll   Int         @default(5)
+  pointsPerSurvey Int         @default(10)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model RegistrationConfig {
+  id              String      @id @default(cuid())
+  eventId         String      @unique
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  requiredFields  Json        @default("[]")  // ["firstName", "lastName", "email", etc]
+  optionalFields  Json        @default("[]")
+  hiddenFields    Json        @default("[]")
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model EventSettings {
+  id              String      @id @default(cuid())
+  eventId         String      @unique
+  event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  scanMode        ScanMode    @default(UNLIMITED) // ONE_SCAN, DAILY, UNLIMITED
+  enableNotifications Boolean  @default(false)
+  enableLeaderboard Boolean   @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model AuditLog {
+  id              String      @id @default(cuid())
+  adminId         String
+  admin           Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  action          String
+  resource        String
+  details         Json?
+  createdAt       DateTime    @default(now())
+
+  @@index([adminId])
+  @@index([createdAt])
+}
+
+enum UserRole {
+  ATTENDEE
+  SUPER_ADMIN
+  EVENT_ADMIN
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  EVENT_ADMIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  LIVE
+  ENDED
+  ARCHIVED
+}
+
+enum ActivityType {
+  QUIZ
+  POLL
+  SURVEY
+  DOWNLOAD
+  VIDEO
+  RAFFLE
+  CUSTOM_CTA
+}
+
+enum ScanMode {
+  ONE_SCAN      // Only once per event
+  DAILY         // Once per day per zone
+  UNLIMITED     // Multiple times allowed
+}
