@@ -255,8 +255,16 @@ async function main() {
 
   // Create Sample Scans
   await Promise.all([
-    prisma.scan.create({
-      data: {
+    prisma.scan.upsert({
+      where: {
+        userId_zoneId_eventId: {
+          userId: attendees[0].id,
+          zoneId: zones[0].id,
+          eventId: event.id,
+        },
+      },
+      update: {},
+      create: {
         userId: attendees[0].id,
         zoneId: zones[0].id,
         eventId: event.id,
@@ -266,8 +274,16 @@ async function main() {
         browser: 'Chrome',
       },
     }),
-    prisma.scan.create({
-      data: {
+    prisma.scan.upsert({
+      where: {
+        userId_zoneId_eventId: {
+          userId: attendees[0].id,
+          zoneId: zones[1].id,
+          eventId: event.id,
+        },
+      },
+      update: {},
+      create: {
         userId: attendees[0].id,
         zoneId: zones[1].id,
         eventId: event.id,
