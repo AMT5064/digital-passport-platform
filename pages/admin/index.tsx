@@ -1,166 +1,101 @@
 import React, { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
+import axios from 'axios'
 import Link from 'next/link'
+import AdminLayout from '@/components/AdminLayout'
+import {
+  Calendar, MapPin, Gamepad2, BarChart3, Trophy, Users,
+  TrendingUp, ScanLine, UserCheck, Activity,
+} from 'lucide-react'
 
 export default function AdminDashboard() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const [stats, setStats] = useState({
+    totalParticipants: 0,
+    totalScans: 0,
+    uniqueVisitors: 0,
+    totalZones: 0,
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    } else if (session?.user && session.user.role === 'ATTENDEE') {
-      router.push('/passport')
-    }
-  }, [session, status, router])
+    axios
+      .get('/api/analytics?eventId=event-1')
+      .then((res) => {
+        if (res.data.success) {
+          setStats({
+            totalParticipants: res.data.data.totalParticipants,
+            totalScans: res.data.data.totalScans,
+            uniqueVisitors: res.data.data.uniqueVisitors,
+            totalZones: res.data.data.zoneStats?.length || 0,
+          })
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  const statCards = [
+    { label: 'Participants', value: stats.totalParticipants, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Total Scans', value: stats.totalScans, icon: ScanLine, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Unique Visitors', value: stats.uniqueVisitors, icon: UserCheck, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Active Zones', value: stats.totalZones, icon: MapPin, color: 'text-purple-600', bg: 'bg-purple-50' },
+  ]
 
-  if (!session?.user) return null
+  const modules = [
+    { title: 'Events', desc: 'Manage your events', icon: Calendar, link: '/admin/events' },
+    { title: 'Zones', desc: 'Create and manage zones', icon: MapPin, link: '/admin/zones' },
+    { title: 'Activities', desc: 'Configure zone activities', icon: Gamepad2, link: '/admin/activities' },
+    { title: 'Analytics', desc: 'View event analytics', icon: BarChart3, link: '/admin/analytics' },
+    { title: 'Leaderboard', desc: 'View rankings and scores', icon: Trophy, link: '/admin/leaderboard' },
+    { title: 'Participants', desc: 'Manage event participants', icon: Users, link: '/admin/participants' },
+  ]
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-blue-100">Digital Passport Event Management</p>
-        </div>
-      </header>
-
-      {/* Sidebar Navigation */}
-      <div className="max-w-7xl mx-auto flex">
-        <aside className="w-64 bg-blue-700 text-white p-6 min-h-screen">
-          <nav className="space-y-4">
-            <Link href="/admin/events">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                📅 Events
-              </button>
-            </Link>
-            <Link href="/admin/zones">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                📍 Zones
-              </button>
-            </Link>
-            <Link href="/admin/activities">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                🎮 Activities
-              </button>
-            </Link>
-            <Link href="/admin/analytics">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                📊 Analytics
-              </button>
-            </Link>
-            <Link href="/admin/leaderboard">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                🏆 Leaderboard
-              </button>
-            </Link>
-            <Link href="/admin/participants">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                👥 Participants
-              </button>
-            </Link>
-            <Link href="/admin/settings">
-              <button className="w-full text-left px-4 py-2 hover:bg-blue-600 rounded transition">
-                ⚙️ Settings
-              </button>
-            </Link>
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <DashboardCard
-              title="Events"
-              description="Manage your events"
-              icon="📅"
-              link="/admin/events"
-            />
-            <DashboardCard
-              title="Zones"
-              description="Create and manage zones"
-              icon="📍"
-              link="/admin/zones"
-            />
-            <DashboardCard
-              title="Activities"
-              description="Configure zone activities"
-              icon="🎮"
-              link="/admin/activities"
-            />
-            <DashboardCard
-              title="Analytics"
-              description="View event analytics"
-              icon="📊"
-              link="/admin/analytics"
-            />
-            <DashboardCard
-              title="Leaderboard"
-              description="View rankings and scores"
-              icon="🏆"
-              link="/admin/leaderboard"
-            />
-            <DashboardCard
-              title="Participants"
-              description="Manage event participants"
-              icon="👥"
-              link="/admin/participants"
-            />
-          </div>
-
-          {/* Quick Stats */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StatBox label="Total Events" value="1" />
-            <StatBox label="Total Zones" value="4" />
-            <StatBox label="Total Participants" value="0" />
-            <StatBox label="Total Scans" value="0" />
-          </div>
-        </main>
+    <AdminLayout title="Dashboard" description="Overview of your event engagement platform">
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {statCards.map((s) => {
+          const Icon = s.icon
+          return (
+            <div key={s.label} className="premium-card p-4 sm:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
+                  <Icon size={20} className={s.color} />
+                </div>
+                <TrendingUp size={16} className="text-slate-300" />
+              </div>
+              {loading ? (
+                <div className="skeleton h-7 w-16 rounded" />
+              ) : (
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{s.value}</p>
+              )}
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{s.label}</p>
+            </div>
+          )
+        })}
       </div>
-    </div>
-  )
-}
 
-function DashboardCard({
-  title,
-  description,
-  icon,
-  link,
-}: {
-  title: string
-  description: string
-  icon: string
-  link: string
-}) {
-  return (
-    <Link href={link}>
-      <div className="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition">
-        <div className="text-4xl mb-4">{icon}</div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-        <p className="text-gray-600">{description}</p>
+      {/* Modules */}
+      <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">Management</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        {modules.map((m) => {
+          const Icon = m.icon
+          return (
+            <Link key={m.title} href={m.link}>
+              <div className="premium-card p-5 cursor-pointer group">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center transition-colors shrink-0">
+                    <Icon size={20} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 text-sm mb-0.5">{m.title}</h3>
+                    <p className="text-xs text-slate-500">{m.desc}</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )
+        })}
       </div>
-    </Link>
-  )
-}
-
-function StatBox({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <p className="text-gray-600 text-sm mb-2">{label}</p>
-      <p className="text-4xl font-bold text-blue-600">{value}</p>
-    </div>
+    </AdminLayout>
   )
 }

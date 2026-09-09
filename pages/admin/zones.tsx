@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
-import Link from 'next/link'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import AdminLayout from '@/components/AdminLayout'
+import { Plus, MapPin, X, QrCode, Loader2 } from 'lucide-react'
 
 interface Zone {
   id: string
@@ -10,200 +10,140 @@ interface Zone {
   qrSlug: string
   points: number
   active: boolean
-  activity?: string
+  activity?: { type: string } | null
 }
 
 export default function ZonesPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [zones, setZones] = useState<Zone[]>([
-    {
-      id: 'zone-1',
-      name: 'Hall A - Registration',
-      description: 'Welcome and registration',
-      qrSlug: 'hall-a',
-      points: 10,
-      active: true,
-      activity: 'QUIZ',
-    },
-    {
-      id: 'zone-2',
-      name: 'Hall B - Product Demo',
-      description: 'Live product demonstrations',
-      qrSlug: 'hall-b',
-      points: 15,
-      active: true,
-      activity: 'POLL',
-    },
-    {
-      id: 'zone-3',
-      name: 'Hall C - Keynote',
-      description: 'Main keynote presentations',
-      qrSlug: 'hall-c',
-      points: 20,
-      active: true,
-      activity: 'RAFFLE',
-    },
-    {
-      id: 'zone-4',
-      name: 'Networking Lounge',
-      description: 'Meet and greet',
-      qrSlug: 'networking',
-      points: 15,
-      active: true,
-      activity: 'SURVEY',
-    },
-  ])
-
+  const [zones, setZones] = useState<Zone[]>([])
+  const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    points: 10,
-  })
+  const [formData, setFormData] = useState({ name: '', description: '', points: 10 })
 
-  const handleCreateZone = (e: React.FormEvent) => {
-    e.preventDefault()
-    const qrSlug = formData.name.toLowerCase().replace(/\s+/g, '-')
-    const newZone: Zone = {
-      id: `zone-${Date.now()}`,
-      ...formData,
-      qrSlug,
-      active: true,
+  const fetchZones = async () => {
+    try {
+      const res = await axios.get('/api/admin/zones?eventId=event-1')
+      if (res.data.success) setZones(res.data.data)
+    } catch {
+      // fallback to empty
+    } finally {
+      setLoading(false)
     }
-    setZones([...zones, newZone])
-    setShowCreateForm(false)
-    setFormData({ name: '', description: '', points: 10 })
   }
 
-  const downloadQR = (qrSlug: string) => {
-    // In a real implementation, would generate and download QR code
-    alert(`Download QR code for ${qrSlug}`)
-  }
+  useEffect(() => {
+    fetchZones()
+  }, [])
 
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
+  const handleCreateZone = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const res = await axios.post('/api/admin/zones?eventId=event-1', {
+        name: formData.name,
+        description: formData.description,
+        points: formData.points,
+      })
+      if (res.data.success) {
+        setZones([...zones, res.data.data])
+        setShowCreateForm(false)
+        setFormData({ name: '', description: '', points: 10 })
+      }
+    } catch {
+      // ignore
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">📍 Zones</h1>
-          <Link href="/admin">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back to Admin
+    <AdminLayout
+      title="Zones"
+      description="Create and manage QR zones"
+      action={
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+        >
+          <Plus size={18} /> Create Zone
+        </button>
+      }
+    >
+      {showCreateForm && (
+        <div className="premium-card p-5 sm:p-6 mb-6 animate-slide-in">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900">Create New Zone</h2>
+            <button onClick={() => setShowCreateForm(false)} className="text-slate-400 hover:text-slate-600">
+              <X size={20} />
             </button>
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Create Zone Button */}
-        <div className="mb-8">
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
-          >
-            + Create Zone
-          </button>
-        </div>
-
-        {/* Create Zone Form */}
-        {showCreateForm && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4">Create New Zone</h2>
-            <form onSubmit={handleCreateZone} className="space-y-4">
-              <input
-                type="text"
-                placeholder="Zone Name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                className="w-full border border-gray-300 rounded px-4 py-2"
-              />
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded px-4 py-2"
-                rows={3}
-              />
-              <input
-                type="number"
-                placeholder="Points"
-                value={formData.points}
-                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
-                className="w-full border border-gray-300 rounded px-4 py-2"
-              />
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-                >
-                  Create Zone
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
           </div>
-        )}
+          <form onSubmit={handleCreateZone} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Zone Name</label>
+              <input type="text" placeholder="Hall A - Registration" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+              <textarea placeholder="Zone description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows={3} />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Points</label>
+              <input type="number" value={formData.points} onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Create Zone</button>
+              <button type="button" onClick={() => setShowCreateForm(false)} className="border border-slate-300 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
 
-        {/* Zones Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="skeleton h-48 rounded-xl" />
+          ))}
+        </div>
+      ) : zones.length === 0 ? (
+        <div className="premium-card p-12 text-center">
+          <MapPin size={32} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">No zones created yet</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {zones.map((zone) => (
-            <div key={zone.id} className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{zone.name}</h3>
-              <p className="text-gray-600 text-sm mb-4">{zone.description}</p>
-
-              <div className="space-y-2 mb-4 text-sm">
-                <p>
-                  <strong>QR Slug:</strong> {zone.qrSlug}
-                </p>
-                <p>
-                  <strong>Points:</strong> {zone.points}
-                </p>
-                <p>
-                  <strong>Activity:</strong> {zone.activity || 'Not set'}
-                </p>
-                <p>
-                  <strong>Status:</strong>{' '}
-                  <span
-                    className={`px-2 py-1 rounded text-xs font-semibold ${
-                      zone.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {zone.active ? 'Active' : 'Inactive'}
-                  </span>
-                </p>
+            <div key={zone.id} className="premium-card p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center">
+                  <MapPin size={20} className="text-indigo-600" />
+                </div>
+                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${zone.active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {zone.active ? 'Active' : 'Inactive'}
+                </span>
               </div>
-
+              <h3 className="font-bold text-slate-900 text-sm mb-1">{zone.name}</h3>
+              <p className="text-xs text-slate-500 mb-3 line-clamp-2">{zone.description || 'No description'}</p>
+              <div className="space-y-1.5 text-xs text-slate-600 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">QR Slug</span>
+                  <span className="font-mono font-medium text-slate-700">{zone.qrSlug}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Points</span>
+                  <span className="font-semibold text-amber-600">{zone.points} pts</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Activity</span>
+                  <span className="font-medium text-slate-700">{zone.activity?.type?.replace(/_/g, ' ') || 'None'}</span>
+                </div>
+              </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => downloadQR(zone.qrSlug)}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
-                >
-                  Download QR
+                <button className="flex-1 flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition-colors">
+                  <QrCode size={14} /> QR
                 </button>
-                <button className="flex-1 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm">
-                  Edit
-                </button>
-                <button className="flex-1 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm">
-                  Delete
-                </button>
+                <button className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-semibold transition-colors">Edit</button>
+                <button className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold transition-colors">Delete</button>
               </div>
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      )}
+    </AdminLayout>
   )
 }

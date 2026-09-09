@@ -1,102 +1,85 @@
 import React, { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
-import Link from 'next/link'
+import AdminLayout from '@/components/AdminLayout'
+import { Settings, Save, CheckCircle2 } from 'lucide-react'
 
 export default function SettingsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
   const [settings, setSettings] = useState({
     scanMode: 'UNLIMITED',
     enableNotifications: true,
     enableLeaderboard: true,
   })
+  const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
-    // In a real implementation, would save to database
-    alert('Settings saved!')
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">⚙️ Settings</h1>
-          <Link href="/admin">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back
-            </button>
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-lg shadow-lg p-8 space-y-6">
+    <AdminLayout title="Settings" description="Configure event settings">
+      <div className="max-w-2xl">
+        <div className="premium-card p-5 sm:p-6 space-y-6">
           {/* Scan Mode */}
           <div>
-            <label className="block text-lg font-semibold text-gray-800 mb-2">
-              Scan Mode
-            </label>
+            <label className="block text-sm font-semibold text-slate-900 mb-2">Scan Mode</label>
             <select
               value={settings.scanMode}
               onChange={(e) => setSettings({ ...settings, scanMode: e.target.value })}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="ONE_SCAN">One Scan Only (per zone per user)</option>
               <option value="DAILY">Daily (once per day per zone)</option>
               <option value="UNLIMITED">Unlimited Scans</option>
             </select>
-            <p className="text-sm text-gray-600 mt-2">
-              Determines how many times users can scan the same zone
-            </p>
+            <p className="text-xs text-slate-500 mt-1.5">Determines how many times users can scan the same zone</p>
           </div>
 
-          {/* Enable Notifications */}
-          <div>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={settings.enableNotifications}
-                onChange={(e) => setSettings({ ...settings, enableNotifications: e.target.checked })}
-                className="w-4 h-4 mr-3"
-              />
-              <span className="text-lg font-semibold text-gray-800">Enable Email Notifications</span>
-            </label>
-            <p className="text-sm text-gray-600 mt-2 ml-7">
-              Send email notifications for rewards and milestones
-            </p>
+          <div className="border-t border-slate-100 pt-5">
+            {/* Notifications */}
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Email Notifications</p>
+                <p className="text-xs text-slate-500 mt-0.5">Send email notifications for rewards and milestones</p>
+              </div>
+              <button
+                onClick={() => setSettings({ ...settings, enableNotifications: !settings.enableNotifications })}
+                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${settings.enableNotifications ? 'bg-indigo-600' : 'bg-slate-300'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${settings.enableNotifications ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
+
+            {/* Leaderboard */}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Live Leaderboard</p>
+                <p className="text-xs text-slate-500 mt-0.5">Display live leaderboard to participants</p>
+              </div>
+              <button
+                onClick={() => setSettings({ ...settings, enableLeaderboard: !settings.enableLeaderboard })}
+                className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${settings.enableLeaderboard ? 'bg-indigo-600' : 'bg-slate-300'}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${settings.enableLeaderboard ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
           </div>
 
-          {/* Enable Leaderboard */}
-          <div>
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={settings.enableLeaderboard}
-                onChange={(e) => setSettings({ ...settings, enableLeaderboard: e.target.checked })}
-                className="w-4 h-4 mr-3"
-              />
-              <span className="text-lg font-semibold text-gray-800">Enable Leaderboard</span>
-            </label>
-            <p className="text-sm text-gray-600 mt-2 ml-7">
-              Display live leaderboard to participants
-            </p>
+          {/* Save */}
+          <div className="border-t border-slate-100 pt-5 flex items-center gap-3">
+            <button
+              onClick={handleSave}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <Save size={16} /> Save Settings
+            </button>
+            {saved && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium animate-fade-in">
+                <CheckCircle2 size={16} /> Saved successfully
+              </span>
+            )}
           </div>
-
-          {/* Save Button */}
-          <button
-            onClick={handleSave}
-            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold mt-8"
-          >
-            Save Settings
-          </button>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

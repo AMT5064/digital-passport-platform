@@ -21,12 +21,14 @@ export default async function handler(
   }
 
   // Verify admin access
-  const admin = await prisma.admin.findFirst({
-    where: { id: session.user.id, eventId },
-  })
+  if (session.user.role !== 'SUPER_ADMIN') {
+    const admin = await prisma.admin.findFirst({
+      where: { id: session.user.id, eventId },
+    })
 
-  if (!admin) {
-    return res.status(403).json({ success: false, error: 'Unauthorized' })
+    if (!admin) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' })
+    }
   }
 
   if (req.method === 'GET') {

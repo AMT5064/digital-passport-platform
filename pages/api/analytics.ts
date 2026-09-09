@@ -28,15 +28,17 @@ export default async function handler(
     }
 
     // Verify admin access to this event
-    const admin = await prisma.admin.findFirst({
-      where: { id: session.user.id, eventId },
-    })
-
-    if (!admin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Unauthorized',
+    if (session.user.role !== 'SUPER_ADMIN') {
+      const admin = await prisma.admin.findFirst({
+        where: { id: session.user.id, eventId },
       })
+
+      if (!admin) {
+        return res.status(403).json({
+          success: false,
+          error: 'Unauthorized',
+        })
+      }
     }
 
     // Get total participants

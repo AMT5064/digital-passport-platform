@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
 import Link from 'next/link'
+import AdminLayout from '@/components/AdminLayout'
+import { Plus, Calendar, MapPin, X, Search } from 'lucide-react'
 
 interface Event {
   id: string
@@ -15,8 +15,6 @@ interface Event {
 }
 
 export default function EventsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
   const [events, setEvents] = useState<Event[]>([
     {
       id: 'event-1',
@@ -24,174 +22,126 @@ export default function EventsPage() {
       description: 'Annual technology summit',
       startDate: '2024-06-20',
       endDate: '2024-06-22',
-      venue: 'Convention Center',
+      venue: 'Convention Center, San Francisco',
       status: 'PUBLISHED',
-      participants: 0,
+      participants: 2,
     },
   ])
-
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    startDate: '',
-    endDate: '',
-    venue: '',
-  })
+  const [formData, setFormData] = useState({ name: '', description: '', startDate: '', endDate: '', venue: '' })
 
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real implementation, would save to database
-    const newEvent: Event = {
-      id: `event-${Date.now()}`,
-      ...formData,
-      status: 'DRAFT',
-      participants: 0,
-    }
+    const newEvent: Event = { id: `event-${Date.now()}`, ...formData, status: 'DRAFT', participants: 0 }
     setEvents([...events, newEvent])
     setShowCreateForm(false)
-    setFormData({
-      name: '',
-      description: '',
-      startDate: '',
-      endDate: '',
-      venue: '',
-    })
+    setFormData({ name: '', description: '', startDate: '', endDate: '', venue: '' })
   }
 
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
+  const statusStyles: Record<string, string> = {
+    PUBLISHED: 'bg-emerald-50 text-emerald-700',
+    LIVE: 'bg-blue-50 text-blue-700',
+    DRAFT: 'bg-slate-100 text-slate-600',
+    ENDED: 'bg-amber-50 text-amber-700',
+    ARCHIVED: 'bg-slate-100 text-slate-500',
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">📅 Events</h1>
-          <Link href="/admin">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back to Admin
+    <AdminLayout
+      title="Events"
+      description="Manage your events"
+      action={
+        <button
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+        >
+          <Plus size={18} /> Create Event
+        </button>
+      }
+    >
+      {showCreateForm && (
+        <div className="premium-card p-5 sm:p-6 mb-6 animate-slide-in">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-slate-900">Create New Event</h2>
+            <button onClick={() => setShowCreateForm(false)} className="text-slate-400 hover:text-slate-600">
+              <X size={20} />
             </button>
-          </Link>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Create Event Button */}
-        <div className="mb-8">
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
-          >
-            + Create Event
-          </button>
-        </div>
-
-        {/* Create Event Form */}
-        {showCreateForm && (
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 className="text-2xl font-bold mb-4">Create New Event</h2>
-            <form onSubmit={handleCreateEvent} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Event Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2"
-                />
-                <input
-                  type="text"
-                  placeholder="Venue"
-                  value={formData.venue}
-                  onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                  className="border border-gray-300 rounded px-4 py-2"
-                />
-              </div>
-              <textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded px-4 py-2"
-                rows={3}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2"
-                />
-                <input
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                  required
-                  className="border border-gray-300 rounded px-4 py-2"
-                />
-              </div>
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-                >
-                  Create Event
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCreateForm(false)}
-                  className="bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
           </div>
-        )}
+          <form onSubmit={handleCreateEvent} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Event Name</label>
+                <input type="text" placeholder="Tech Summit 2024" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Venue</label>
+                <input type="text" placeholder="Convention Center" value={formData.venue} onChange={(e) => setFormData({ ...formData, venue: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
+              <textarea placeholder="Event description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows={3} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Start Date</label>
+                <input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">End Date</label>
+                <input type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} required className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Create Event</button>
+              <button type="button" onClick={() => setShowCreateForm(false)} className="border border-slate-300 text-slate-700 px-5 py-2 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
 
-        {/* Events List */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* Events table */}
+      <div className="premium-card overflow-hidden">
+        <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-200">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold">Event Name</th>
-                <th className="px-6 py-3 text-left font-semibold">Dates</th>
-                <th className="px-6 py-3 text-left font-semibold">Venue</th>
-                <th className="px-6 py-3 text-left font-semibold">Status</th>
-                <th className="px-6 py-3 text-left font-semibold">Participants</th>
-                <th className="px-6 py-3 text-left font-semibold">Actions</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Event</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Dates</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Venue</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Status</th>
+                <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Participants</th>
+                <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
             <tbody>
               {events.map((event) => (
-                <tr key={event.id} className="border-t hover:bg-gray-50">
-                  <td className="px-6 py-4 font-semibold">{event.name}</td>
-                  <td className="px-6 py-4 text-sm">
-                    {event.startDate} to {event.endDate}
+                <tr key={event.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                        <Calendar size={18} className="text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-slate-900 text-sm">{event.name}</p>
+                        <p className="text-xs text-slate-500 sm:hidden">{event.startDate} — {event.endDate}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 text-sm">{event.venue}</td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-3 py-1 rounded text-sm font-semibold ${
-                        event.status === 'PUBLISHED'
-                          ? 'bg-green-100 text-green-800'
-                          : event.status === 'LIVE'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
+                  <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 hidden sm:table-cell">{event.startDate} — {event.endDate}</td>
+                  <td className="px-4 sm:px-6 py-4 text-sm text-slate-600 hidden md:table-cell">{event.venue}</td>
+                  <td className="px-4 sm:px-6 py-4">
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${statusStyles[event.status]}`}>
                       {event.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4">{event.participants}</td>
-                  <td className="px-6 py-4 space-x-2">
-                    <button className="text-blue-600 hover:underline text-sm">Edit</button>
-                    <button className="text-purple-600 hover:underline text-sm">Manage</button>
-                    <button className="text-red-600 hover:underline text-sm">Delete</button>
+                  <td className="px-4 sm:px-6 py-4 text-sm font-semibold text-slate-700 text-right hidden sm:table-cell">{event.participants}</td>
+                  <td className="px-4 sm:px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <button className="text-indigo-600 hover:text-indigo-500 text-sm font-medium">Edit</button>
+                      <button className="text-slate-500 hover:text-slate-700 text-sm font-medium hidden sm:block">Manage</button>
+                      <button className="text-red-500 hover:text-red-600 text-sm font-medium">Delete</button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -199,6 +149,6 @@ export default function EventsPage() {
           </table>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

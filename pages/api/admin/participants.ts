@@ -32,56 +32,40 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
-      const zones = await prisma.zone.findMany({
+      const users = await prisma.user.findMany({
         where: { eventId },
-        include: { activity: true },
-      })
-
-      return res.status(200).json({
-        success: true,
-        data: zones,
-      })
-    } catch (error) {
-      console.error('Get zones error:', error)
-      return res.status(500).json({ success: false, error: 'Internal server error' })
-    }
-  }
-
-  if (req.method === 'POST') {
-    try {
-      const { name, description, image, points } = req.body
-
-      if (!name) {
-        return res.status(400).json({ success: false, error: 'Zone name required' })
-      }
-
-      // Generate unique QR slug
-      const baseSlug = name.toLowerCase().replace(/\s+/g, '-')
-      let qrSlug = baseSlug
-      let counter = 1
-
-      while (await prisma.zone.findUnique({ where: { qrSlug } })) {
-        qrSlug = `${baseSlug}-${counter}`
-        counter++
-      }
-
-      const zone = await prisma.zone.create({
-        data: {
-          name,
-          description,
-          image,
-          qrSlug,
-          eventId,
-          points: points || 10,
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          mobile: true,
+          company: true,
+          designation: true,
+          createdAt: true,
+          scans: {
+            select: { id: true, pointsEarned: true },
+          },
         },
+        orderBy: { createdAt: 'desc' },
       })
 
-      return res.status(201).json({
-        success: true,
-        data: zone,
-      })
+      const data = users.map((u) => ({
+        id: u.id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        mobile: u.mobile,
+        company: u.company,
+        designation: u.designation,
+        joinedDate: u.createdAt,
+        totalScans: u.scans.length,
+        totalPoints: u.scans.reduce((sum, s) => sum + s.pointsEarned, 0),
+      }))
+
+      return res.status(200).json({ success: true, data })
     } catch (error) {
-      console.error('Create zone error:', error)
+      console.error('Participants error:', error)
       return res.status(500).json({ success: false, error: 'Internal server error' })
     }
   }

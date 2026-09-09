@@ -1,179 +1,173 @@
-import React, { useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/router'
-import Link from 'next/link'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
+import AdminLayout from '@/components/AdminLayout'
+import {
+  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
+import { Users, ScanLine, UserCheck, CheckCircle2, Download, FileText, FileSpreadsheet } from 'lucide-react'
 
 export default function AnalyticsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Mock analytics data
-  const hourlyData = [
-    { hour: '9:00', visits: 45, completions: 38 },
-    { hour: '10:00', visits: 52, completions: 44 },
-    { hour: '11:00', visits: 48, completions: 41 },
-    { hour: '12:00', visits: 61, completions: 52 },
-    { hour: '13:00', visits: 55, completions: 47 },
-    { hour: '14:00', visits: 67, completions: 58 },
-    { hour: '15:00', visits: 72, completions: 63 },
+  useEffect(() => {
+    axios
+      .get('/api/analytics?eventId=event-1')
+      .then((res) => {
+        if (res.data.success) setData(res.data.data)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const colors = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444']
+
+  const metrics = [
+    { label: 'Participants', value: data?.totalParticipants ?? 0, icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Unique Visitors', value: data?.uniqueVisitors ?? 0, icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Total Scans', value: data?.totalScans ?? 0, icon: ScanLine, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Completion Rate', value: data?.totalScans ? `${Math.round((data.uniqueVisitors / data.totalScans) * 100)}%` : '0%', icon: CheckCircle2, color: 'text-purple-600', bg: 'bg-purple-50' },
   ]
 
-  const zoneData = [
-    { name: 'Hall A', visits: 120, completions: 115 },
-    { name: 'Hall B', visits: 98, completions: 92 },
-    { name: 'Hall C', visits: 145, completions: 138 },
-    { name: 'Networking', visits: 87, completions: 81 },
-  ]
+  const hourlyData = (data?.hourlyTraffic || []).map((h: any) => ({
+    hour: h.hour,
+    visits: h.visits,
+    completions: h.completions,
+  }))
 
-  const activityData = [
-    { name: 'Quiz', value: 280 },
-    { name: 'Poll', value: 250 },
-    { name: 'Survey', value: 180 },
-    { name: 'Raffle', value: 140 },
-  ]
+  const zoneData = (data?.zoneStats || []).map((z: any) => ({
+    name: z.zoneName,
+    visits: z.visits,
+    completions: z.completionRate,
+  }))
 
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
-
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
-  }
+  const activityData = (data?.topActivities || []).map((a: any) => ({
+    name: a.activityType?.replace(/_/g, ' ') || a.zoneName,
+    value: a.completions,
+  }))
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">📊 Analytics</h1>
-          <Link href="/admin">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back to Admin
-            </button>
-          </Link>
-        </div>
-      </header>
+    <AdminLayout title="Analytics" description="Event performance insights">
+      {/* Metrics */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {metrics.map((m) => {
+          const Icon = m.icon
+          return (
+            <div key={m.label} className="premium-card p-4 sm:p-5">
+              <div className={`w-10 h-10 rounded-lg ${m.bg} flex items-center justify-center mb-3`}>
+                <Icon size={20} className={m.color} />
+              </div>
+              {loading ? (
+                <div className="skeleton h-7 w-16 rounded" />
+              ) : (
+                <p className="text-2xl sm:text-3xl font-bold text-slate-900">{m.value}</p>
+              )}
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{m.label}</p>
+            </div>
+          )
+        })}
+      </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <MetricCard label="Total Participants" value="245" />
-          <MetricCard label="Unique Visitors" value="198" />
-          <MetricCard label="Total Scans" value="450" />
-          <MetricCard label="Completion Rate" value="87%" />
+      {loading ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="skeleton h-80 rounded-xl" />
+          ))}
         </div>
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Hourly Traffic */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Traffic by Hour</h3>
-            <ResponsiveContainer width="100%" height={300}>
+          <div className="premium-card p-5">
+            <h3 className="font-bold text-slate-900 text-sm mb-4">Traffic by Hour</h3>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="visits" stroke="#3B82F6" />
-                <Line type="monotone" dataKey="completions" stroke="#10B981" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="hour" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <Tooltip contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Line type="monotone" dataKey="visits" stroke="#4F46E5" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="completions" stroke="#10B981" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           {/* Zone Performance */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Zone Performance</h3>
-            <ResponsiveContainer width="100%" height={300}>
+          <div className="premium-card p-5">
+            <h3 className="font-bold text-slate-900 text-sm mb-4">Zone Performance</h3>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={zoneData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="visits" fill="#3B82F6" />
-                <Bar dataKey="completions" fill="#10B981" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                <Tooltip contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Bar dataKey="visits" fill="#4F46E5" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="completions" fill="#10B981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           {/* Activity Distribution */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Activity Distribution</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={activityData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {activityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+          {activityData.length > 0 && (
+            <div className="premium-card p-5">
+              <h3 className="font-bold text-slate-900 text-sm mb-4">Activity Distribution</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie data={activityData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} dataKey="value">
+                    {activityData.map((_: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
 
           {/* Zone Details Table */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Zone Details</h3>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left">Zone</th>
-                  <th className="px-4 py-2 text-right">Visits</th>
-                  <th className="px-4 py-2 text-right">Completion</th>
-                  <th className="px-4 py-2 text-right">Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {zoneData.map((zone) => (
-                  <tr key={zone.name} className="border-t">
-                    <td className="px-4 py-2">{zone.name}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{zone.visits}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{zone.completions}</td>
-                    <td className="px-4 py-2 text-right text-green-600 font-semibold">
-                      {Math.round((zone.completions / zone.visits) * 100)}%
-                    </td>
+          <div className="premium-card p-5">
+            <h3 className="font-bold text-slate-900 text-sm mb-4">Zone Details</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500">Zone</th>
+                    <th className="px-2 py-2 text-right text-xs font-semibold text-slate-500">Visits</th>
+                    <th className="px-2 py-2 text-right text-xs font-semibold text-slate-500">Rate</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(data?.zoneStats || []).map((zone: any) => (
+                    <tr key={zone.zoneId} className="border-b border-slate-100 last:border-0">
+                      <td className="px-2 py-2.5 text-slate-700">{zone.zoneName}</td>
+                      <td className="px-2 py-2.5 text-right font-semibold text-slate-700">{zone.visits}</td>
+                      <td className="px-2 py-2.5 text-right font-semibold text-emerald-600">{Math.round(zone.completionRate)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Export Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold mb-4">Export Data</h3>
-          <div className="flex gap-4">
-            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-              📥 Export as CSV
-            </button>
-            <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
-              📊 Export as PDF
-            </button>
-            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-              📈 Export Excel
-            </button>
-          </div>
+      {/* Export */}
+      <div className="premium-card p-5">
+        <h3 className="font-bold text-slate-900 text-sm mb-4">Export Data</h3>
+        <div className="flex flex-wrap gap-3">
+          <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+            <Download size={16} /> CSV
+          </button>
+          <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+            <FileText size={16} /> PDF
+          </button>
+          <button className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+            <FileSpreadsheet size={16} /> Excel
+          </button>
         </div>
       </div>
-    </div>
-  )
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <p className="text-gray-600 text-sm mb-2">{label}</p>
-      <p className="text-4xl font-bold text-blue-600">{value}</p>
-    </div>
+    </AdminLayout>
   )
 }

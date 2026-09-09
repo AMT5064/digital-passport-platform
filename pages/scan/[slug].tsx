@@ -2,22 +2,17 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
-import { ActivityType } from '@/types'
+import Link from 'next/link'
+import {
+  MapPin, Award, CheckCircle2, Loader2, AlertCircle,
+  ArrowLeft, HelpCircle, BarChart2, FileText, Video,
+  Gift, ExternalLink, Download,
+} from 'lucide-react'
 
 interface ZoneData {
-  zone: {
-    id: string
-    name: string
-    description: string
-    image: string
-    points: number
-  }
+  zone: { id: string; name: string; description: string; image: string; points: number }
   activity: any
-  event: {
-    id: string
-    name: string
-    themeColor: string
-  }
+  event: { id: string; name: string; themeColor: string }
 }
 
 export default function ScanPage() {
@@ -34,7 +29,6 @@ export default function ScanPage() {
 
   useEffect(() => {
     if (!slug) return
-
     const fetchZone = async () => {
       try {
         const response = await axios.get(`/api/scan/${slug}`)
@@ -43,34 +37,26 @@ export default function ScanPage() {
         } else {
           setError('Zone not found')
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load zone')
       } finally {
         setLoading(false)
       }
     }
-
     fetchZone()
   }, [slug])
 
   const handleCompleteActivity = async () => {
     if (!session?.user || !zoneData) return
-
     setSubmitting(true)
     setError('')
-
     try {
       const response = await axios.post(`/api/scan/${slug}`, {
         completedAt: new Date().toISOString(),
-        activityData: {
-          type: zoneData.activity.type,
-          quizAnswer,
-          pollAnswer,
-        },
+        activityData: { type: zoneData.activity.type, quizAnswer, pollAnswer },
         device: 'Mobile',
         browser: 'Chrome',
       })
-
       if (response.data.success) {
         setCompleted(true)
       }
@@ -83,15 +69,16 @@ export default function ScanPage() {
 
   if (status === 'unauthenticated') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Sign In Required</h2>
-          <button
-            onClick={() => router.push('/login')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+            <MapPin size={28} className="text-indigo-600" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Sign In Required</h2>
+          <p className="text-slate-500 text-sm mb-6">Please sign in to participate in this activity.</p>
+          <Link href="/login" className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors">
             Sign In
-          </button>
+          </Link>
         </div>
       </div>
     )
@@ -99,26 +86,23 @@ export default function ScanPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p>Loading zone...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 size={28} className="animate-spin text-indigo-600" />
       </div>
     )
   }
 
   if (error && !zoneData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/passport')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Back to Dashboard
-          </button>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={28} className="text-red-600" />
+          </div>
+          <p className="text-slate-700 font-medium mb-6">{error}</p>
+          <Link href="/passport" className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 font-semibold text-sm">
+            <ArrowLeft size={16} /> Back to Dashboard
+          </Link>
         </div>
       </div>
     )
@@ -128,118 +112,112 @@ export default function ScanPage() {
 
   if (completed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-500 to-green-700">
-        <div className="bg-white rounded-lg shadow-xl p-8 text-center max-w-md">
-          <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Great Job!</h2>
-          <p className="text-gray-600 mb-4">
-            You completed the activity at <strong>{zoneData.zone.name}</strong>
-          </p>
-          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-6">
-            <p className="text-2xl font-bold text-yellow-700">
-              +{zoneData.zone.points} Points
-            </p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+        <div className="premium-card p-8 text-center max-w-md w-full">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 size={32} className="text-emerald-600" />
           </div>
-          <button
-            onClick={() => router.push('/passport')}
-            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-semibold"
-          >
-            Back to Dashboard
-          </button>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Great Job!</h2>
+          <p className="text-slate-500 text-sm mb-5">
+            You completed the activity at <strong className="text-slate-700">{zoneData.zone.name}</strong>
+          </p>
+          <div className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-50 border border-amber-200 mb-6">
+            <Award size={20} className="text-amber-600" />
+            <span className="text-xl font-bold text-amber-700">+{zoneData.zone.points} Points</span>
+          </div>
+          <div>
+            <Link href="/passport" className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors">
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
     )
   }
 
+  const activityIcons: Record<string, any> = {
+    QUIZ: HelpCircle, POLL: BarChart2, SURVEY: FileText,
+    VIDEO: Video, RAFFLE: Gift, CUSTOM_CTA: ExternalLink, DOWNLOAD: Download,
+  }
+  const ActivityIcon = activityIcons[zoneData.activity?.type] || HelpCircle
+
   return (
-    <div
-      className="min-h-screen p-4 pt-8"
-      style={{ backgroundColor: zoneData.event.themeColor + '20' }}
-    >
+    <div className="min-h-screen bg-slate-50 py-6 px-4">
       <div className="max-w-2xl mx-auto">
+        <Link href="/passport" className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm font-medium mb-4 transition-colors">
+          <ArrowLeft size={16} /> Back
+        </Link>
+
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+            <AlertCircle size={16} className="shrink-0" />
             {error}
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="premium-card overflow-hidden">
           {/* Zone Header */}
-          <div
-            className="p-6 text-white"
-            style={{ backgroundColor: zoneData.event.themeColor }}
-          >
-            <h1 className="text-3xl font-bold mb-2">{zoneData.zone.name}</h1>
-            <p className="opacity-90">{zoneData.zone.description}</p>
+          <div className="p-5 sm:p-6 text-white" style={{ backgroundColor: zoneData.event.themeColor }}>
+            <div className="flex items-center gap-2 mb-2 opacity-80">
+              <MapPin size={16} />
+              <span className="text-xs font-medium uppercase tracking-wide">{zoneData.event.name}</span>
+            </div>
+            <h1 className="text-2xl font-bold mb-1">{zoneData.zone.name}</h1>
+            <p className="text-sm opacity-90">{zoneData.zone.description}</p>
           </div>
 
           {/* Zone Image */}
           {zoneData.zone.image && (
-            <div className="h-48 bg-gray-200 flex items-center justify-center">
-              <img
-                src={zoneData.zone.image}
-                alt={zoneData.zone.name}
-                className="w-full h-full object-cover"
-              />
+            <div className="h-44 bg-slate-100">
+              <img src={zoneData.zone.image} alt={zoneData.zone.name} className="w-full h-full object-cover" />
             </div>
           )}
 
           {/* Activity Content */}
-          <div className="p-6">
+          <div className="p-5 sm:p-6">
+            {zoneData.activity && (
+              <div className="flex items-center gap-2 mb-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                <ActivityIcon size={16} />
+                {zoneData.activity.type.replace(/_/g, ' ')} Activity
+              </div>
+            )}
+
             {zoneData.activity?.type === 'QUIZ' && (
-              <QuizActivity
-                activity={zoneData.activity}
-                answer={quizAnswer}
-                setAnswer={setQuizAnswer}
-              />
+              <QuizActivity activity={zoneData.activity} answer={quizAnswer} setAnswer={setQuizAnswer} />
             )}
-
             {zoneData.activity?.type === 'POLL' && (
-              <PollActivity
-                activity={zoneData.activity}
-                answer={pollAnswer}
-                setAnswer={setPollAnswer}
-              />
+              <PollActivity activity={zoneData.activity} answer={pollAnswer} setAnswer={setPollAnswer} />
             )}
+            {zoneData.activity?.type === 'SURVEY' && <SurveyActivity activity={zoneData.activity} />}
+            {zoneData.activity?.type === 'VIDEO' && <VideoActivity activity={zoneData.activity} />}
+            {zoneData.activity?.type === 'RAFFLE' && <RaffleActivity activity={zoneData.activity} />}
+            {zoneData.activity?.type === 'CUSTOM_CTA' && <CustomCTAActivity activity={zoneData.activity} />}
+            {zoneData.activity?.type === 'DOWNLOAD' && <DownloadActivity activity={zoneData.activity} />}
 
-            {zoneData.activity?.type === 'SURVEY' && (
-              <SurveyActivity activity={zoneData.activity} />
-            )}
-
-            {zoneData.activity?.type === 'VIDEO' && (
-              <VideoActivity activity={zoneData.activity} />
-            )}
-
-            {zoneData.activity?.type === 'RAFFLE' && (
-              <RaffleActivity activity={zoneData.activity} />
-            )}
-
-            {zoneData.activity?.type === 'CUSTOM_CTA' && (
-              <CustomCTAActivity activity={zoneData.activity} />
-            )}
-
-            {zoneData.activity?.type === 'DOWNLOAD' && (
-              <DownloadActivity activity={zoneData.activity} />
-            )}
-
-            {/* Submit Button */}
             <button
               onClick={handleCompleteActivity}
               disabled={submitting}
               style={{ backgroundColor: zoneData.event.themeColor }}
-              className="w-full text-white py-3 rounded-lg hover:opacity-90 transition font-semibold mt-6 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 text-white py-3 rounded-xl hover:opacity-90 transition font-semibold text-sm mt-6 disabled:opacity-60"
             >
-              {submitting ? 'Submitting...' : 'Complete Activity'}
+              {submitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 size={18} />
+                  Complete Activity
+                </>
+              )}
             </button>
           </div>
         </div>
 
-        <div className="mt-4 text-center text-gray-600">
-          <p>
-            You will earn <strong>{zoneData.zone.points} points</strong> for completing this
-            activity
-          </p>
-        </div>
+        <p className="mt-4 text-center text-sm text-slate-500">
+          You will earn <strong className="text-slate-700">{zoneData.zone.points} points</strong> for completing this activity
+        </p>
       </div>
     </div>
   )
@@ -248,22 +226,17 @@ export default function ScanPage() {
 function QuizActivity({ activity, answer, setAnswer }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">{activity.question}</h3>
+      <h3 className="text-lg font-bold text-slate-900 mb-4">{activity.question}</h3>
       <div className="space-y-2">
         {activity.answers?.map((opt: any) => (
           <label
             key={opt.id}
-            className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+            className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
+              answer === opt.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'
+            }`}
           >
-            <input
-              type="radio"
-              name="quiz"
-              value={opt.id}
-              checked={answer === opt.id}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="mr-3"
-            />
-            <span>{opt.text}</span>
+            <input type="radio" name="quiz" value={opt.id} checked={answer === opt.id} onChange={(e) => setAnswer(e.target.value)} className="accent-indigo-600" />
+            <span className="text-sm text-slate-700">{opt.text}</span>
           </label>
         ))}
       </div>
@@ -274,22 +247,17 @@ function QuizActivity({ activity, answer, setAnswer }: any) {
 function PollActivity({ activity, answer, setAnswer }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">{activity.question}</h3>
+      <h3 className="text-lg font-bold text-slate-900 mb-4">{activity.question}</h3>
       <div className="space-y-2">
         {activity.pollOptions?.map((opt: any) => (
           <label
             key={opt.id}
-            className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+            className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
+              answer === opt.id ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:bg-slate-50'
+            }`}
           >
-            <input
-              type="radio"
-              name="poll"
-              value={opt.id}
-              checked={answer === opt.id}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="mr-3"
-            />
-            <span>{opt.text}</span>
+            <input type="radio" name="poll" value={opt.id} checked={answer === opt.id} onChange={(e) => setAnswer(e.target.value)} className="accent-indigo-600" />
+            <span className="text-sm text-slate-700">{opt.text}</span>
           </label>
         ))}
       </div>
@@ -300,8 +268,34 @@ function PollActivity({ activity, answer, setAnswer }: any) {
 function SurveyActivity({ activity }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Survey</h3>
-      <p className="text-gray-600">Please fill out the survey questions</p>
+      <h3 className="text-lg font-bold text-slate-900 mb-2">Survey</h3>
+      <p className="text-sm text-slate-500 mb-4">{activity.question}</p>
+      <div className="space-y-4">
+        {activity.surveyQuestions?.map((q: any) => (
+          <div key={q.id}>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">{q.question}</label>
+            {q.type === 'rating' ? (
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} className="w-9 h-9 rounded-lg border border-slate-200 hover:border-amber-400 hover:bg-amber-50 text-sm font-medium text-slate-600 transition-colors">
+                    {n}
+                  </button>
+                ))}
+              </div>
+            ) : q.type === 'multiple_choice' ? (
+              <div className="flex flex-wrap gap-2">
+                {q.options?.map((opt: string) => (
+                  <button key={opt} className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 text-sm text-slate-600 transition-colors">
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <input type="text" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Your answer..." />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -309,19 +303,28 @@ function SurveyActivity({ activity }: any) {
 function VideoActivity({ activity }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Watch Video</h3>
-      <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center mb-4">
-        <span className="text-gray-500">Video player</span>
-      </div>
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Watch Video</h3>
+      {activity.videoUrl ? (
+        <div className="aspect-video rounded-xl overflow-hidden bg-slate-900">
+          <video src={activity.videoUrl} controls className="w-full h-full" />
+        </div>
+      ) : (
+        <div className="aspect-video rounded-xl bg-slate-100 flex items-center justify-center">
+          <Video size={32} className="text-slate-400" />
+        </div>
+      )}
     </div>
   )
 }
 
 function RaffleActivity({ activity }: any) {
   return (
-    <div>
-      <h3 className="text-xl font-bold mb-4">Raffle Entry</h3>
-      <p className="text-gray-600">You are entered into our raffle draw!</p>
+    <div className="text-center py-4">
+      <div className="w-14 h-14 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-3">
+        <Gift size={28} className="text-purple-600" />
+      </div>
+      <h3 className="text-lg font-bold text-slate-900 mb-1">Raffle Entry</h3>
+      <p className="text-sm text-slate-500">{activity.question || 'You are entered into our raffle draw!'}</p>
     </div>
   )
 }
@@ -329,14 +332,9 @@ function RaffleActivity({ activity }: any) {
 function CustomCTAActivity({ activity }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Special Offer</h3>
-      <a
-        href={activity.ctaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-600 hover:underline"
-      >
-        {activity.ctaButtonText}
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Special Offer</h3>
+      <a href={activity.ctaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 font-medium text-sm">
+        {activity.ctaButtonText || 'Learn More'} <ExternalLink size={16} />
       </a>
     </div>
   )
@@ -345,13 +343,9 @@ function CustomCTAActivity({ activity }: any) {
 function DownloadActivity({ activity }: any) {
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Download</h3>
-      <a
-        href={activity.downloadUrl}
-        download
-        className="text-blue-600 hover:underline"
-      >
-        Download {activity.downloadName}
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Download</h3>
+      <a href={activity.downloadUrl} download className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-500 font-medium text-sm">
+        <Download size={16} /> Download {activity.downloadName || 'File'}
       </a>
     </div>
   )

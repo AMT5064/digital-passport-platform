@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import axios from 'axios'
 import Link from 'next/link'
 import QRCode from 'qrcode.react'
+import AttendeeLayout from '@/components/AttendeeLayout'
+import {
+  Trophy, TrendingUp, MapPin, Award, ScanLine,
+  BarChart3, Info, Clock, Plus,
+} from 'lucide-react'
 
 interface DashboardData {
-  user: any
   totalPoints: number
   currentRank: number
   zonesCompleted: number
   zonesTotal: number
-  badges: any[]
-  recentScans: any[]
+  badges: { id: string; name: string; description?: string; icon?: string }[]
+  recentScans: { id: string; zoneName: string; points: number; date: string }[]
 }
 
 export default function PassportPage() {
@@ -29,154 +33,156 @@ export default function PassportPage() {
 
   useEffect(() => {
     if (session?.user && status === 'authenticated') {
-      // In a real implementation, this would fetch dashboard data
-      // For now, we'll show a mock dashboard
-      setDashboard({
-        user: session.user,
-        totalPoints: 0,
-        currentRank: 0,
-        zonesCompleted: 0,
-        zonesTotal: 4,
-        badges: [],
-        recentScans: [],
-      })
-      setLoading(false)
+      axios
+        .get('/api/dashboard')
+        .then((res) => {
+          if (res.data.success) setDashboard(res.data.data)
+        })
+        .catch(() => {})
+        .finally(() => setLoading(false))
     }
   }, [session, status])
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <AttendeeLayout>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="skeleton h-28 rounded-xl" />
+          ))}
         </div>
-      </div>
+        <div className="skeleton h-48 rounded-xl" />
+      </AttendeeLayout>
     )
   }
 
   if (!dashboard) return null
 
+  const stats = [
+    { label: 'Total Points', value: dashboard.totalPoints, icon: Trophy, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Current Rank', value: dashboard.currentRank > 0 ? `#${dashboard.currentRank}` : '#-', icon: TrendingUp, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+    { label: 'Zones Completed', value: `${dashboard.zonesCompleted}/${dashboard.zonesTotal}`, icon: MapPin, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Badges', value: dashboard.badges.length, icon: Award, color: 'text-purple-600', bg: 'bg-purple-50' },
+  ]
+
+  const actions = [
+    { title: 'Scan QR Code', desc: 'Scan a zone QR code to participate', icon: ScanLine, link: '/scan' },
+    { title: 'View Leaderboard', desc: 'See how you rank against others', icon: BarChart3, link: '/leaderboard?eventId=event-1' },
+    { title: 'Event Details', desc: 'Learn more about the event', icon: Info, link: '/event' },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-blue-600 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Digital Passport</h1>
-            <p className="text-blue-100">Event Engagement Platform</p>
-          </div>
-          <button
-            onClick={() => signOut()}
-            className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-semibold transition"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* User Info Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Welcome, {dashboard.user.name}!
-              </h2>
-              <p className="text-gray-600">
-                {dashboard.user.email}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Your Digital Passport</p>
-              <QRCode value={dashboard.user.id} size={100} level="H" />
-            </div>
+    <AttendeeLayout>
+      {/* Welcome + QR */}
+      <div className="premium-card p-5 sm:p-6 mb-6 flex flex-col sm:flex-row items-center sm:items-start gap-5">
+        <div className="flex-1 text-center sm:text-left">
+          <h2 className="text-xl font-bold text-slate-900 mb-1">
+            Welcome, {session?.user?.name?.split(' ')[0]}!
+          </h2>
+          <p className="text-sm text-slate-500 mb-4">{session?.user?.email}</p>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-medium">
+            <Trophy size={14} />
+            {dashboard.totalPoints} points earned
           </div>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Total Points" value={dashboard.totalPoints} icon="🏆" />
-          <StatCard title="Current Rank" value={`#${dashboard.currentRank || '-'}`} icon="📈" />
-          <StatCard
-            title="Zones Completed"
-            value={`${dashboard.zonesCompleted}/${dashboard.zonesTotal}`}
-            icon="📍"
-          />
-          <StatCard title="Badges" value={dashboard.badges.length} icon="🎖️" />
-        </div>
-
-        {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <ActionCard
-            title="Scan QR Code"
-            description="Scan a zone QR code to participate"
-            icon="📱"
-            action={() => router.push('/scan')}
-          />
-          <ActionCard
-            title="View Leaderboard"
-            description="See how you rank against others"
-            icon="🏅"
-            action={() => router.push('/leaderboard')}
-          />
-          <ActionCard
-            title="Event Details"
-            description="Learn more about the event"
-            icon="ℹ️"
-            action={() => router.push('/event')}
-          />
-        </div>
-
-        {/* Badges Section */}
-        {dashboard.badges.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">Your Badges</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {dashboard.badges.map((badge) => (
-                <div key={badge.id} className="text-center">
-                  <div className="text-4xl mb-2">{badge.icon || '🏆'}</div>
-                  <p className="font-semibold text-sm text-gray-800">{badge.name}</p>
-                </div>
-              ))}
-            </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-xs text-slate-500 font-medium">Your Digital Passport</p>
+          <div className="p-2 bg-white rounded-xl border border-slate-200">
+            <QRCode value={session?.user?.id || ''} size={88} level="H" />
           </div>
-        )}
+        </div>
       </div>
-    </div>
-  )
-}
 
-function StatCard({ title, value, icon }: { title: string; value: any; icon: string }) {
-  return (
-    <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-      <div className="text-4xl mb-2">{icon}</div>
-      <p className="text-gray-600 text-sm mb-2">{title}</p>
-      <p className="text-3xl font-bold text-gray-800">{value}</p>
-    </div>
-  )
-}
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        {stats.map((s) => {
+          const Icon = s.icon
+          return (
+            <div key={s.label} className="premium-card p-4 sm:p-5">
+              <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
+                <Icon size={20} className={s.color} />
+              </div>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900">{s.value}</p>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">{s.label}</p>
+            </div>
+          )
+        })}
+      </div>
 
-function ActionCard({
-  title,
-  description,
-  icon,
-  action,
-}: {
-  title: string
-  description: string
-  icon: string
-  action: () => void
-}) {
-  return (
-    <button
-      onClick={action}
-      className="bg-white rounded-lg shadow-lg p-6 text-left hover:shadow-xl transition cursor-pointer"
-    >
-      <div className="text-4xl mb-2">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
-    </button>
+      {/* Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+        {actions.map((a) => {
+          const Icon = a.icon
+          return (
+            <Link key={a.title} href={a.link}>
+              <div className="premium-card p-5 cursor-pointer group">
+                <div className="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-indigo-50 flex items-center justify-center mb-3 transition-colors">
+                  <Icon size={20} className="text-slate-600 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <h3 className="font-semibold text-slate-900 text-sm mb-1">{a.title}</h3>
+                <p className="text-xs text-slate-500">{a.desc}</p>
+              </div>
+            </Link>
+          )
+        })}
+      </div>
+
+      {/* Recent Activity */}
+      {dashboard.recentScans.length > 0 && (
+        <div className="premium-card p-5 sm:p-6">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <Clock size={18} className="text-slate-400" />
+            Recent Activity
+          </h3>
+          <div className="space-y-2">
+            {dashboard.recentScans.map((scan) => (
+              <div
+                key={scan.id}
+                className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <MapPin size={16} className="text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{scan.zoneName}</p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(scan.date).toLocaleDateString('en-US', {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <span className="flex items-center gap-1 text-sm font-semibold text-amber-600">
+                  <Plus size={14} />
+                  {scan.points}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Badges */}
+      {dashboard.badges.length > 0 && (
+        <div className="premium-card p-5 sm:p-6 mt-6">
+          <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <Award size={18} className="text-slate-400" />
+            Your Badges
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {dashboard.badges.map((badge) => (
+              <div key={badge.id} className="text-center p-3 rounded-xl bg-slate-50">
+                <div className="text-3xl mb-2">{badge.icon || '🏆'}</div>
+                <p className="text-sm font-semibold text-slate-800">{badge.name}</p>
+                {badge.description && (
+                  <p className="text-xs text-slate-500 mt-0.5">{badge.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </AttendeeLayout>
   )
 }

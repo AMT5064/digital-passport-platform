@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import axios from 'axios'
 import Link from 'next/link'
+import AttendeeLayout from '@/components/AttendeeLayout'
+import { Trophy, ArrowLeft, Maximize2, Minimize2, Crown, Medal } from 'lucide-react'
 
 interface LeaderboardEntry {
   rank: number
@@ -18,22 +20,17 @@ export default function LeaderboardPage() {
   const { eventId } = router.query
   const [entries, setEntries] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(0)
   const [viewMode, setViewMode] = useState<'normal' | 'fullscreen'>('normal')
 
   useEffect(() => {
     if (!eventId || typeof eventId !== 'string') return
-
     const fetchLeaderboard = async () => {
       try {
         const response = await axios.get('/api/leaderboard', {
-          params: { eventId, page, pageSize: 50 },
+          params: { eventId, page: 1, pageSize: 50 },
         })
-
         if (response.data.success) {
           setEntries(response.data.data.data)
-          setTotalPages(response.data.data.totalPages)
         }
       } catch (error) {
         console.error('Failed to fetch leaderboard:', error)
@@ -41,231 +38,210 @@ export default function LeaderboardPage() {
         setLoading(false)
       }
     }
-
     fetchLeaderboard()
-  }, [eventId, page])
+  }, [eventId])
 
   if (!eventId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-4">No event selected</p>
-          <button
-            onClick={() => router.push('/passport')}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
+      <AttendeeLayout title="Leaderboard">
+        <div className="premium-card p-12 text-center">
+          <Trophy size={32} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500 mb-4">No event selected</p>
+          <Link href="/passport" className="text-indigo-600 hover:text-indigo-500 font-semibold text-sm">
             Back to Dashboard
-          </button>
+          </Link>
         </div>
-      </div>
+      </AttendeeLayout>
     )
   }
 
   if (viewMode === 'fullscreen') {
-    return <FullscreenLeaderboard entries={entries} onExit={() => setViewMode('normal')} />
+    return <FullscreenLeaderboard entries={entries} onExit={() => setViewMode('normal')} loading={loading} />
   }
 
+  const rankStyles = [
+    { bg: 'bg-amber-50', text: 'text-amber-700', icon: Crown },
+    { bg: 'bg-slate-100', text: 'text-slate-600', icon: Medal },
+    { bg: 'bg-orange-50', text: 'text-orange-700', icon: Medal },
+  ]
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-purple-600 to-purple-800 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold">🏅 Leaderboard</h1>
-            <p className="text-purple-100">Top Performers</p>
-          </div>
-          <Link href="/passport">
-            <button className="bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition">
-              ← Back
-            </button>
-          </Link>
-        </div>
-      </header>
+    <AttendeeLayout title="Leaderboard">
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-sm text-slate-500">{entries.length} participants ranked</p>
+        <button
+          onClick={() => setViewMode('fullscreen')}
+          className="flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          <Maximize2 size={15} /> Fullscreen
+        </button>
+      </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* View Mode Toggle */}
-        <div className="mb-6 flex gap-4">
-          <button
-            onClick={() => setViewMode('fullscreen')}
-            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition font-semibold"
-          >
-            Fullscreen View
-          </button>
+      {loading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="skeleton h-16 rounded-xl" />
+          ))}
         </div>
+      ) : entries.length === 0 ? (
+        <div className="premium-card p-12 text-center">
+          <Trophy size={32} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-500">No participants yet</p>
+        </div>
+      ) : (
+        <>
+          {/* Top 3 podium */}
+          {entries.length >= 3 && (
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {[1, 0, 2].map((idx) => {
+                const entry = entries[idx]
+                const style = rankStyles[idx]
+                const Icon = style.icon
+                return (
+                  <div
+                    key={entry.userId}
+                    className={`premium-card p-4 text-center ${idx === 0 ? 'sm:scale-105 sm:-mt-2' : ''}`}
+                  >
+                    <div className={`w-12 h-12 rounded-full ${style.bg} flex items-center justify-center mx-auto mb-2`}>
+                      <Icon size={24} className={style.text} />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{entry.userName}</p>
+                    <p className={`text-lg font-bold ${style.text}`}>{entry.points}</p>
+                    <p className="text-xs text-slate-400">points</p>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
-        {/* Leaderboard Table */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading leaderboard...</p>
-          </div>
-        ) : entries.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No participants yet</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Full table */}
+          <div className="premium-card overflow-hidden">
             <table className="w-full">
-              <thead className="bg-purple-600 text-white">
+              <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-3 text-left font-semibold">Rank</th>
-                  <th className="px-6 py-3 text-left font-semibold">Name</th>
-                  <th className="px-6 py-3 text-right font-semibold">Points</th>
-                  <th className="px-6 py-3 text-right font-semibold">Zones</th>
-                  <th className="px-6 py-3 text-right font-semibold">Activities</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Rank</th>
+                  <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Points</th>
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Zones</th>
+                  <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide hidden sm:table-cell">Activities</th>
                 </tr>
               </thead>
               <tbody>
-                {entries.map((entry, index) => (
-                  <tr
-                    key={entry.userId}
-                    className={`border-t ${
-                      entry.rank === 1
-                        ? 'bg-yellow-50'
-                        : entry.rank === 2
-                        ? 'bg-gray-100'
-                        : entry.rank === 3
-                        ? 'bg-orange-50'
-                        : ''
-                    } hover:bg-gray-50 transition`}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        {entry.rank === 1 ? (
-                          <span className="text-2xl">🥇</span>
-                        ) : entry.rank === 2 ? (
-                          <span className="text-2xl">🥈</span>
-                        ) : entry.rank === 3 ? (
-                          <span className="text-2xl">🥉</span>
+                {entries.map((entry) => {
+                  const style = entry.rank <= 3 ? rankStyles[entry.rank - 1] : null
+                  return (
+                    <tr key={entry.userId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                      <td className="px-4 sm:px-6 py-3.5">
+                        {style ? (
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full ${style.bg} text-xs font-bold ${style.text}`}>
+                            {entry.rank}
+                          </span>
                         ) : (
-                          <span className="font-bold text-gray-600">{entry.rank}</span>
+                          <span className="text-sm font-semibold text-slate-400 pl-1">{entry.rank}</span>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {entry.userAvatar ? (
-                          <img
-                            src={entry.userAvatar}
-                            alt={entry.userName}
-                            className="w-8 h-8 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold">
-                            {entry.userName.charAt(0)}
-                          </div>
-                        )}
-                        <span className="font-semibold text-gray-800">{entry.userName}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-bold text-purple-600 text-lg">{entry.points}</span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-gray-600">{entry.zonesCompleted}</td>
-                    <td className="px-6 py-4 text-right text-gray-600">
-                      {entry.activitiesCompleted}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 sm:px-6 py-3.5">
+                        <div className="flex items-center gap-2.5">
+                          {entry.userAvatar ? (
+                            <img src={entry.userAvatar} alt={entry.userName} className="w-7 h-7 rounded-full object-cover" />
+                          ) : (
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold">
+                              {entry.userName.charAt(0)}
+                            </div>
+                          )}
+                          <span className="text-sm font-medium text-slate-900">{entry.userName}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3.5 text-right">
+                        <span className="text-sm font-bold text-indigo-600">{entry.points}</span>
+                      </td>
+                      <td className="px-4 sm:px-6 py-3.5 text-right text-sm text-slate-500 hidden sm:table-cell">{entry.zonesCompleted}</td>
+                      <td className="px-4 sm:px-6 py-3.5 text-right text-sm text-slate-500 hidden sm:table-cell">{entry.activitiesCompleted}</td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex justify-center gap-2">
-            <button
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                key={i + 1}
-                onClick={() => setPage(i + 1)}
-                className={`px-4 py-2 rounded-lg ${
-                  page === i + 1
-                    ? 'bg-purple-600 text-white'
-                    : 'border border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-            <button
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </AttendeeLayout>
   )
 }
 
 function FullscreenLeaderboard({
-  entries,
-  onExit,
+  entries, onExit, loading,
 }: {
   entries: LeaderboardEntry[]
   onExit: () => void
+  loading: boolean
 }) {
+  const rankStyles = [
+    { bg: 'bg-amber-500', text: 'text-amber-100' },
+    { bg: 'bg-slate-400', text: 'text-slate-100' },
+    { bg: 'bg-orange-600', text: 'text-orange-100' },
+  ]
+
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-purple-900 to-purple-700 flex items-center justify-center">
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 to-indigo-950 flex items-center justify-center p-4">
       <button
         onClick={onExit}
-        className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+        className="absolute top-4 right-4 flex items-center gap-1.5 text-slate-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 text-sm transition-colors"
       >
-        Exit
+        <Minimize2 size={16} /> Exit
       </button>
 
-      <div className="max-w-4xl w-full px-4">
-        <h1 className="text-5xl font-bold text-white text-center mb-8">🏆 LEADERBOARD 🏆</h1>
+      <div className="max-w-3xl w-full">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white text-center mb-8 flex items-center justify-center gap-3">
+          <Trophy className="text-amber-400" /> Leaderboard <Trophy className="text-amber-400" />
+        </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {entries.slice(0, 3).map((entry) => (
-            <div
-              key={entry.userId}
-              className={`rounded-lg p-6 text-center text-white ${
-                entry.rank === 1
-                  ? 'bg-yellow-500 scale-105'
-                  : entry.rank === 2
-                  ? 'bg-gray-400'
-                  : 'bg-orange-600'
-              }`}
-            >
-              <div className="text-6xl mb-2">
-                {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'}
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{entry.userName}</h3>
-              <p className="text-4xl font-bold">{entry.points} pts</p>
-            </div>
-          ))}
-        </div>
-
-        {entries.length > 3 && (
-          <div className="bg-white rounded-lg overflow-hidden">
-            <table className="w-full">
-              <tbody>
-                {entries.slice(3).map((entry) => (
-                  <tr key={entry.userId} className="border-t hover:bg-gray-50">
-                    <td className="px-6 py-4 font-bold text-lg">{entry.rank}</td>
-                    <td className="px-6 py-4 font-semibold">{entry.userName}</td>
-                    <td className="px-6 py-4 text-right font-bold text-purple-600 text-lg">
-                      {entry.points}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-400 border-t-transparent" />
           </div>
+        ) : entries.length === 0 ? (
+          <p className="text-center text-slate-400">No participants yet</p>
+        ) : (
+          <>
+            {/* Top 3 */}
+            {entries.length >= 3 && (
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                {[1, 0, 2].map((idx) => {
+                  const entry = entries[idx]
+                  const style = rankStyles[idx]
+                  return (
+                    <div
+                      key={entry.userId}
+                      className={`rounded-2xl p-5 text-center ${style.bg} ${idx === 0 ? 'scale-105' : ''}`}
+                    >
+                      <div className="text-4xl mb-2">
+                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                      </div>
+                      <h3 className="text-lg font-bold text-white truncate">{entry.userName}</h3>
+                      <p className="text-2xl font-bold text-white mt-1">{entry.points}</p>
+                      <p className="text-xs text-white/70">points</p>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Rest */}
+            {entries.length > 3 && (
+              <div className="bg-white/10 backdrop-blur rounded-2xl overflow-hidden">
+                {entries.slice(3).map((entry) => (
+                  <div key={entry.userId} className="flex items-center justify-between px-5 py-3 border-b border-white/10 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <span className="text-white/60 font-bold w-6">{entry.rank}</span>
+                      <span className="text-white font-medium text-sm">{entry.userName}</span>
+                    </div>
+                    <span className="text-indigo-300 font-bold">{entry.points}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
