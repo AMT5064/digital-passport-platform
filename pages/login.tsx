@@ -168,12 +168,6 @@ export default function Login() {
             </button>
           </Link>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-[#00CBB3]/10 border border-[#00CBB3]/30 rounded-lg">
-            <p className="text-xs font-semibold text-[#00CBB3] mb-2">Demo Credentials:</p>
-            <p className="text-xs text-gray-300"><strong>Email:</strong> john@example.com</p>
-            <p className="text-xs text-gray-300"><strong>Password:</strong> User@123</p>
-          </div>
         </div>
 
         {/* Footer */}

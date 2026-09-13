@@ -3,16 +3,15 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import axios from 'axios'
 import Link from 'next/link'
-import QRCode from 'qrcode.react'
+import { Trophy, TrendingUp, MapPin, Award, QrCode, BarChart3, Info, LogOut } from 'lucide-react'
 
 interface DashboardData {
   user: any
   totalPoints: number
-  currentRank: number
+  currentRank: number | null
   zonesCompleted: number
   zonesTotal: number
   badges: any[]
-  recentScans: any[]
 }
 
 export default function PassportPage() {
@@ -41,7 +40,6 @@ export default function PassportPage() {
             zonesCompleted: res.data.zonesCompleted,
             zonesTotal: res.data.zonesTotal,
             badges: res.data.badges,
-            recentScans: [],
           })
         })
         .catch((err) => console.error('Failed to load passport stats:', err))
@@ -51,11 +49,8 @@ export default function PassportPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -63,86 +58,73 @@ export default function PassportPage() {
   if (!dashboard) return null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
       {/* Header */}
-      <header className="bg-blue-600 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-6 flex justify-between items-center">
+      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
+        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Digital Passport</h1>
-            <p className="text-blue-100">Event Engagement Platform</p>
+            <h1 className="text-lg font-oswald font-bold">Digital Passport</h1>
+            <p className="text-xs text-gray-400">Event Engagement Platform</p>
           </div>
           <button
-            onClick={() => signOut()}
-            className="bg-red-500 hover:bg-red-600 px-6 py-2 rounded-lg font-semibold transition"
+            onClick={() => signOut({ redirect: false }).then(() => router.push('/login'))}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            title="Sign out"
           >
-            Sign Out
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* User Info Card */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Welcome, {dashboard.user.name}!
-              </h2>
-              <p className="text-gray-600">
-                {dashboard.user.email}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Your Digital Passport</p>
-              <QRCode value={dashboard.user.id} size={100} level="H" />
-            </div>
-          </div>
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        {/* Welcome Card */}
+        <div className="bg-gradient-to-br from-[#16123D]/60 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-2xl p-5">
+          <h2 className="text-xl font-oswald font-bold mb-1 truncate">Welcome, {dashboard.user.name}!</h2>
+          <p className="text-gray-400 text-sm truncate">{dashboard.user.email}</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <StatCard title="Total Points" value={dashboard.totalPoints} icon="🏆" />
-          <StatCard title="Current Rank" value={`#${dashboard.currentRank || '-'}`} icon="📈" />
-          <StatCard
-            title="Zones Completed"
-            value={`${dashboard.zonesCompleted}/${dashboard.zonesTotal}`}
-            icon="📍"
-          />
-          <StatCard title="Badges" value={dashboard.badges.length} icon="🎖️" />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3">
+          <StatCard icon={Trophy} label="Total Points" value={dashboard.totalPoints} color="#FFB800" />
+          <StatCard icon={TrendingUp} label="Current Rank" value={dashboard.currentRank ? `#${dashboard.currentRank}` : '-'} color="#00CBB3" />
+          <StatCard icon={MapPin} label="Zones Completed" value={`${dashboard.zonesCompleted}/${dashboard.zonesTotal}`} color="#7600FF" />
+          <StatCard icon={Award} label="Badges" value={dashboard.badges.length} color="#F96A32" />
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="space-y-3">
           <ActionCard
+            icon={QrCode}
             title="Scan QR Code"
-            description="Scan a zone QR code to participate"
-            icon="📱"
-            action={() => router.push('/scan')}
+            description="Scan a zone's QR code to participate"
+            color="#00CBB3"
+            onClick={() => router.push('/scan')}
           />
           <ActionCard
+            icon={BarChart3}
             title="View Leaderboard"
             description="See how you rank against others"
-            icon="🏅"
-            action={() => router.push('/leaderboard')}
+            color="#7600FF"
+            onClick={() => router.push('/leaderboard')}
           />
           <ActionCard
+            icon={Info}
             title="Event Details"
             description="Learn more about the event"
-            icon="ℹ️"
-            action={() => router.push('/event')}
+            color="#FFB800"
+            onClick={() => router.push('/event')}
           />
         </div>
 
         {/* Badges Section */}
         {dashboard.badges.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4">Your Badges</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-5">
+            <h3 className="text-base font-oswald font-bold mb-4">Your Badges</h3>
+            <div className="grid grid-cols-4 gap-3">
               {dashboard.badges.map((badge) => (
                 <div key={badge.id} className="text-center">
-                  <div className="text-4xl mb-2">{badge.icon || '🏆'}</div>
-                  <p className="font-semibold text-sm text-gray-800">{badge.name}</p>
+                  <div className="text-3xl mb-1">{badge.icon || '🏆'}</div>
+                  <p className="text-xs text-gray-300 truncate">{badge.name}</p>
                 </div>
               ))}
             </div>
@@ -153,35 +135,43 @@ export default function PassportPage() {
   )
 }
 
-function StatCard({ title, value, icon }: { title: string; value: any; icon: string }) {
+function StatCard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; value: string | number; color: string }) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 text-center">
-      <div className="text-4xl mb-2">{icon}</div>
-      <p className="text-gray-600 text-sm mb-2">{title}</p>
-      <p className="text-3xl font-bold text-gray-800">{value}</p>
+    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+      <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-2" style={{ backgroundColor: `${color}25` }}>
+        <Icon className="w-4 h-4" style={{ color }} />
+      </div>
+      <p className="text-2xl font-bold leading-tight">{value}</p>
+      <p className="text-xs text-gray-400">{label}</p>
     </div>
   )
 }
 
 function ActionCard({
+  icon: Icon,
   title,
   description,
-  icon,
-  action,
+  color,
+  onClick,
 }: {
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
   title: string
   description: string
-  icon: string
-  action: () => void
+  color: string
+  onClick: () => void
 }) {
   return (
     <button
-      onClick={action}
-      className="bg-white rounded-lg shadow-lg p-6 text-left hover:shadow-xl transition cursor-pointer"
+      onClick={onClick}
+      className="w-full flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl p-4 text-left transition-all"
     >
-      <div className="text-4xl mb-2">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
+      <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${color}25` }}>
+        <Icon className="w-5 h-5" style={{ color }} />
+      </div>
+      <div className="min-w-0">
+        <h3 className="font-bold truncate">{title}</h3>
+        <p className="text-gray-400 text-sm truncate">{description}</p>
+      </div>
     </button>
   )
 }
