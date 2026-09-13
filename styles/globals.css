@@ -381,3 +381,27 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-500);
 }
+
+/* Select dropdown styling */
+select {
+  color-scheme: dark;
+  background-color: rgb(30 41 59 / 0.5);
+  color: white;
+}
+
+select option {
+  background-color: rgb(15 23 42);
+  color: white;
+  padding: 8px 12px;
+}
+
+select option:hover {
+  background-color: rgb(30 41 59);
+  color: #60a5fa;
+}
+
+select option:checked {
+  background: linear-gradient(rgb(59 130 246), rgb(59 130 246));
+  background-color: rgb(59 130 246);
+  color: white;
+}
