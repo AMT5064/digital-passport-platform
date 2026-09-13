@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getSession } from 'next-auth/react'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/types'
 
@@ -12,7 +13,7 @@ export default async function handler(
   }
 
   try {
-    const session = await getSession({ req })
+    const session = await getServerSession(req, res, authOptions)
 
     if (!session?.user) {
       return res.status(401).json({ success: false, error: 'Not authenticated' })

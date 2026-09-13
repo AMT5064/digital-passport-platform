@@ -31,18 +31,21 @@ export default function PassportPage() {
 
   useEffect(() => {
     if (session?.user && status === 'authenticated') {
-      // In a real implementation, this would fetch dashboard data
-      // For now, we'll show a mock dashboard
-      setDashboard({
-        user: session.user,
-        totalPoints: 0,
-        currentRank: 0,
-        zonesCompleted: 0,
-        zonesTotal: 4,
-        badges: [],
-        recentScans: [],
-      })
-      setLoading(false)
+      axios
+        .get('/api/passport-stats')
+        .then((res) => {
+          setDashboard({
+            user: res.data.user,
+            totalPoints: res.data.totalPoints,
+            currentRank: res.data.currentRank,
+            zonesCompleted: res.data.zonesCompleted,
+            zonesTotal: res.data.zonesTotal,
+            badges: res.data.badges,
+            recentScans: [],
+          })
+        })
+        .catch((err) => console.error('Failed to load passport stats:', err))
+        .finally(() => setLoading(false))
     }
   }, [session, status])
 

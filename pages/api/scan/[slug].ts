@@ -1,7 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/types'
-import { getSession } from 'next-auth/react'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,7 +14,7 @@ export default async function handler(
 
   try {
     const { slug } = req.query
-    const session = await getSession({ req })
+    const session = await getServerSession(req, res, authOptions)
 
     if (!slug || typeof slug !== 'string') {
       return res.status(400).json({
@@ -66,7 +67,7 @@ export default async function handler(
 
     const { completedAt, activityData } = req.body
 
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: session.user.id },
     })
 
@@ -74,6 +75,15 @@ export default async function handler(
       return res.status(404).json({
         success: false,
         error: 'User not found',
+      })
+    }
+
+    // Registration doesn't ask which event the attendee is joining, so
+    // associate them with the event of the first zone they scan.
+    if (!user.eventId) {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { eventId: zone.eventId },
       })
     }
 
