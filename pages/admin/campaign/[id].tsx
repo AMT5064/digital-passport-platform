@@ -216,8 +216,8 @@ export default function CampaignDetailPage() {
         {/* Tab Content */}
         <div>
           {activeTab === 'overview' && <OverviewTab campaign={campaign} zones={zones} activities={activities} participants={participants} />}
-          {activeTab === 'zones' && <ZonesTab campaignId={campaignId as string} zones={zones} onRefresh={fetchCampaignData} />}
-          {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onRefresh={fetchCampaignData} />}
+          {activeTab === 'zones' && <ZonesTab campaignId={campaignId as string} zones={zones} onDeleteZone={handleDeleteZone} onRefresh={fetchCampaignData} />}
+          {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onDeleteActivity={handleDeleteActivity} onRefresh={fetchCampaignData} />}
           {activeTab === 'participants' && <ParticipantsTab participants={participants} />}
           {activeTab === 'analytics' && <AnalyticsTab campaign={campaign} />}
         </div>
@@ -321,40 +321,7 @@ function QuickActionButton({ icon: Icon, label, href }: any) {
   )
 }
 
-function ZonesTab({ campaignId, zones, onRefresh }: any) {
-  const { data: session } = useSession()
-
-  const handleDeleteZone = async (id: string, name?: string) => {
-    if (!confirm('Delete this zone? All activities linked to this zone will also be deleted. This action cannot be undone.')) return
-    try {
-      const res = await fetch(`/api/zones-delete?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        logAuditAction('delete', 'zone', id, name)
-        onRefresh()
-      }
-    } catch (error) {
-      console.error('Error deleting zone:', error)
-    }
-  }
-
-  const logAuditAction = async (action: string, entityType: string, entityId: string, entityName?: string) => {
-    try {
-      await fetch('/api/audit-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          entityType,
-          entityId,
-          entityName,
-          campaignId,
-          userId: (session as any)?.user?.email,
-        }),
-      })
-    } catch (error) {
-      console.error('Error logging action:', error)
-    }
-  }
+function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
 
   return (
     <div>
@@ -388,7 +355,7 @@ function ZonesTab({ campaignId, zones, onRefresh }: any) {
                   <Edit2 className="w-4 h-4" />
                   Edit
                 </button>
-                <button onClick={() => handleDeleteZone(zone.id, zone.name)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
+                <button onClick={() => onDeleteZone(zone.id, zone.name)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
@@ -401,40 +368,7 @@ function ZonesTab({ campaignId, zones, onRefresh }: any) {
   )
 }
 
-function ActivitiesTab({ campaignId, activities, zones, onRefresh }: any) {
-  const { data: session } = useSession()
-
-  const handleDeleteActivity = async (id: string, name?: string) => {
-    if (!confirm('Delete this activity? This action cannot be undone.')) return
-    try {
-      const res = await fetch(`/api/activities-delete?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        logAuditAction('delete', 'activity', id, name)
-        onRefresh()
-      }
-    } catch (error) {
-      console.error('Error deleting activity:', error)
-    }
-  }
-
-  const logAuditAction = async (action: string, entityType: string, entityId: string, entityName?: string) => {
-    try {
-      await fetch('/api/audit-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          entityType,
-          entityId,
-          entityName,
-          campaignId,
-          userId: (session as any)?.user?.email,
-        }),
-      })
-    } catch (error) {
-      console.error('Error logging action:', error)
-    }
-  }
+function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActivity }: any) {
 
   const getActivityTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
@@ -480,7 +414,7 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh }: any) {
                   <Edit2 className="w-4 h-4" />
                   Edit
                 </button>
-                <button onClick={() => handleDeleteActivity(activity.id, activity.type)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
+                <button onClick={() => onDeleteActivity(activity.id, activity.type)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
