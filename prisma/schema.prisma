@@ -101,6 +101,8 @@ model Zone {
 model Activity {
   id              String      @id @default(cuid())
   type            ActivityType
+  title           String      @default("")
+  description     String?
   zoneId          String
   zone            Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   eventId         String
@@ -123,6 +125,10 @@ model Activity {
   // Video fields
   videoUrl        String?
   videoDuration   Int?        // seconds
+
+  // Raffle fields
+  raffleName      String?
+  rafflePrize     String?
 
   // Custom CTA fields
   ctaButtonText   String?

@@ -7,12 +7,13 @@ import { ArrowLeft, Gamepad2, AlertCircle, Plus, X } from 'lucide-react'
 type Answer = { id: string; text: string; isCorrect: boolean }
 type PollOption = { id: string; text: string }
 
-export default function CreateActivityPage() {
-  const { data: session, status } = useSession()
+export default function EditActivityPage() {
+  const { status } = useSession()
   const router = useRouter()
-  const { id: campaignId } = router.query
+  const { id: campaignId, activityId } = router.query
   const [zones, setZones] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
     zoneId: '',
@@ -40,10 +41,9 @@ export default function CreateActivityPage() {
   const [surveyQuestions, setSurveyQuestions] = useState<string[]>([''])
 
   useEffect(() => {
-    if (campaignId) {
-      fetchZones()
-    }
-  }, [campaignId])
+    if (campaignId) fetchZones()
+    if (activityId) fetchActivity()
+  }, [campaignId, activityId])
 
   const fetchZones = async () => {
     try {
@@ -52,6 +52,35 @@ export default function CreateActivityPage() {
       setZones(data)
     } catch (err) {
       console.error('Error fetching zones:', err)
+    }
+  }
+
+  const fetchActivity = async () => {
+    try {
+      const response = await fetch(`/api/activities?id=${activityId}`)
+      const a = await response.json()
+      setFormData({
+        zoneId: a.zoneId || '',
+        type: a.type || 'QUIZ',
+        title: a.title || '',
+        description: a.description || '',
+        downloadUrl: a.downloadUrl || '',
+        downloadName: a.downloadName || '',
+        videoUrl: a.videoUrl || '',
+        videoDuration: a.videoDuration ? String(a.videoDuration) : '',
+        raffleName: a.raffleName || '',
+        rafflePrize: a.rafflePrize || '',
+        ctaButtonText: a.ctaButtonText || '',
+        ctaUrl: a.ctaUrl || '',
+      })
+      setQuestion(a.question || '')
+      if (a.answers && Array.isArray(a.answers) && a.answers.length > 0) setAnswers(a.answers)
+      if (a.pollOptions && Array.isArray(a.pollOptions) && a.pollOptions.length > 0) setPollOptions(a.pollOptions)
+      if (a.surveyQuestions && Array.isArray(a.surveyQuestions) && a.surveyQuestions.length > 0) setSurveyQuestions(a.surveyQuestions)
+    } catch (err) {
+      setError('Failed to load activity')
+    } finally {
+      setFetching(false)
     }
   }
 
@@ -81,10 +110,10 @@ export default function CreateActivityPage() {
       }
 
       const payload: any = {
-        eventId: campaignId,
+        id: activityId,
+        zoneId: formData.zoneId,
         type: formData.type,
         title: formData.title,
-        zoneId: formData.zoneId,
         description: formData.description || '',
       }
 
@@ -111,21 +140,21 @@ export default function CreateActivityPage() {
       }
 
       const response = await fetch('/api/activities', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
         const data = await response.json()
-        setError(data.error || 'Failed to create activity')
+        setError(data.error || 'Failed to update activity')
         setLoading(false)
         return
       }
 
       router.push(`/admin/campaign/${campaignId}?tab=activities`)
     } catch (err: any) {
-      setError(err.message || 'Error creating activity')
+      setError(err.message || 'Error updating activity')
       setLoading(false)
     }
   }
@@ -135,7 +164,13 @@ export default function CreateActivityPage() {
     return null
   }
 
-  if (!campaignId) return null
+  if (!campaignId || fetching) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
+      </div>
+    )
+  }
 
   const inputClass = "w-full px-4 py-3 bg-[#16123D]/60 border border-white/20 rounded-lg text-white text-base placeholder-gray-500 focus:border-[#00CBB3] focus:outline-none focus:ring-2 focus:ring-[#00CBB3]/30 transition-all"
   const labelClass = "block text-sm font-semibold text-white mb-3"
@@ -152,8 +187,8 @@ export default function CreateActivityPage() {
           <div className="flex items-center gap-3">
             <Gamepad2 className="w-8 h-8 text-[#00CBB3]" />
             <div>
-              <h1 className="text-2xl font-oswald font-bold">Create New Activity</h1>
-              <p className="text-sm text-gray-400">Add a new activity to a zone</p>
+              <h1 className="text-2xl font-oswald font-bold">Edit Activity</h1>
+              <p className="text-sm text-gray-400">Update activity details</p>
             </div>
           </div>
         </div>
@@ -184,12 +219,6 @@ export default function CreateActivityPage() {
                   </option>
                 ))}
               </select>
-              {zones.length === 0 && (
-                <p className="text-sm text-yellow-400 mt-2 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4" />
-                  No zones yet. Create a zone first.
-                </p>
-              )}
             </div>
 
             <div>
@@ -232,38 +261,19 @@ export default function CreateActivityPage() {
               />
             </div>
 
-            {/* QUIZ fields */}
             {formData.type === 'QUIZ' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Question</label>
-                  <input
-                    type="text"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    className={inputClass}
-                    placeholder="What is your question?"
-                  />
+                  <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} className={inputClass} placeholder="What is your question?" />
                 </div>
                 <div>
                   <label className={labelClass}>Answers (select the correct one)</label>
                   <div className="space-y-2">
                     {answers.map((a) => (
                       <div key={a.id} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="correctAnswer"
-                          checked={a.isCorrect}
-                          onChange={() => setCorrectAnswer(a.id)}
-                          className="w-5 h-5 accent-[#00CBB3] flex-shrink-0"
-                        />
-                        <input
-                          type="text"
-                          value={a.text}
-                          onChange={(e) => updateAnswer(a.id, e.target.value)}
-                          className={inputClass}
-                          placeholder="Answer text"
-                        />
+                        <input type="radio" name="correctAnswer" checked={a.isCorrect} onChange={() => setCorrectAnswer(a.id)} className="w-5 h-5 accent-[#00CBB3] flex-shrink-0" />
+                        <input type="text" value={a.text} onChange={(e) => updateAnswer(a.id, e.target.value)} className={inputClass} placeholder="Answer text" />
                         {answers.length > 2 && (
                           <button type="button" onClick={() => removeAnswer(a.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg flex-shrink-0">
                             <X className="w-5 h-5" />
@@ -279,31 +289,18 @@ export default function CreateActivityPage() {
               </div>
             )}
 
-            {/* POLL fields */}
             {formData.type === 'POLL' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Question</label>
-                  <input
-                    type="text"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    className={inputClass}
-                    placeholder="What would you like to ask?"
-                  />
+                  <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} className={inputClass} placeholder="What would you like to ask?" />
                 </div>
                 <div>
                   <label className={labelClass}>Poll Options</label>
                   <div className="space-y-2">
                     {pollOptions.map((o) => (
                       <div key={o.id} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={o.text}
-                          onChange={(e) => updatePollOption(o.id, e.target.value)}
-                          className={inputClass}
-                          placeholder="Option text"
-                        />
+                        <input type="text" value={o.text} onChange={(e) => updatePollOption(o.id, e.target.value)} className={inputClass} placeholder="Option text" />
                         {pollOptions.length > 2 && (
                           <button type="button" onClick={() => removePollOption(o.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg flex-shrink-0">
                             <X className="w-5 h-5" />
@@ -319,20 +316,13 @@ export default function CreateActivityPage() {
               </div>
             )}
 
-            {/* SURVEY fields */}
             {formData.type === 'SURVEY' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <label className={labelClass}>Survey Questions</label>
                 <div className="space-y-2">
                   {surveyQuestions.map((q, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={q}
-                        onChange={(e) => updateSurveyQuestion(idx, e.target.value)}
-                        className={inputClass}
-                        placeholder={`Question ${idx + 1}`}
-                      />
+                      <input type="text" value={q} onChange={(e) => updateSurveyQuestion(idx, e.target.value)} className={inputClass} placeholder={`Question ${idx + 1}`} />
                       {surveyQuestions.length > 1 && (
                         <button type="button" onClick={() => removeSurveyQuestion(idx)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg flex-shrink-0">
                           <X className="w-5 h-5" />
@@ -347,106 +337,54 @@ export default function CreateActivityPage() {
               </div>
             )}
 
-            {/* DOWNLOAD fields */}
             {formData.type === 'DOWNLOAD' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Download File Name</label>
-                  <input
-                    type="text"
-                    value={formData.downloadName}
-                    onChange={(e) => setFormData({ ...formData, downloadName: e.target.value })}
-                    className={inputClass}
-                    placeholder="e.g. Event Brochure.pdf"
-                  />
+                  <input type="text" value={formData.downloadName} onChange={(e) => setFormData({ ...formData, downloadName: e.target.value })} className={inputClass} placeholder="e.g. Event Brochure.pdf" />
                 </div>
                 <div>
                   <label className={labelClass}>Download URL</label>
-                  <input
-                    type="url"
-                    value={formData.downloadUrl}
-                    onChange={(e) => setFormData({ ...formData, downloadUrl: e.target.value })}
-                    className={inputClass}
-                    placeholder="https://..."
-                  />
+                  <input type="url" value={formData.downloadUrl} onChange={(e) => setFormData({ ...formData, downloadUrl: e.target.value })} className={inputClass} placeholder="https://..." />
                 </div>
               </div>
             )}
 
-            {/* VIDEO fields */}
             {formData.type === 'VIDEO' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Video URL</label>
-                  <input
-                    type="url"
-                    value={formData.videoUrl}
-                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                    className={inputClass}
-                    placeholder="https://youtube.com/... or direct video link"
-                  />
+                  <input type="url" value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} className={inputClass} placeholder="https://youtube.com/... or direct video link" />
                 </div>
                 <div>
                   <label className={labelClass}>Duration (seconds)</label>
-                  <input
-                    type="number"
-                    value={formData.videoDuration}
-                    onChange={(e) => setFormData({ ...formData, videoDuration: e.target.value })}
-                    className={inputClass}
-                    placeholder="e.g. 120"
-                  />
+                  <input type="number" value={formData.videoDuration} onChange={(e) => setFormData({ ...formData, videoDuration: e.target.value })} className={inputClass} placeholder="e.g. 120" />
                 </div>
               </div>
             )}
 
-            {/* RAFFLE fields */}
             {formData.type === 'RAFFLE' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Raffle Name</label>
-                  <input
-                    type="text"
-                    value={formData.raffleName}
-                    onChange={(e) => setFormData({ ...formData, raffleName: e.target.value })}
-                    className={inputClass}
-                    placeholder="e.g. Grand Prize Draw"
-                  />
+                  <input type="text" value={formData.raffleName} onChange={(e) => setFormData({ ...formData, raffleName: e.target.value })} className={inputClass} placeholder="e.g. Grand Prize Draw" />
                 </div>
                 <div>
                   <label className={labelClass}>Prize</label>
-                  <input
-                    type="text"
-                    value={formData.rafflePrize}
-                    onChange={(e) => setFormData({ ...formData, rafflePrize: e.target.value })}
-                    className={inputClass}
-                    placeholder="e.g. Wireless Headphones"
-                  />
+                  <input type="text" value={formData.rafflePrize} onChange={(e) => setFormData({ ...formData, rafflePrize: e.target.value })} className={inputClass} placeholder="e.g. Wireless Headphones" />
                 </div>
               </div>
             )}
 
-            {/* CUSTOM_CTA fields */}
             {formData.type === 'CUSTOM_CTA' && (
               <div className="space-y-4 p-4 bg-white/5 rounded-lg border border-white/10">
                 <div>
                   <label className={labelClass}>Button Text</label>
-                  <input
-                    type="text"
-                    value={formData.ctaButtonText}
-                    onChange={(e) => setFormData({ ...formData, ctaButtonText: e.target.value })}
-                    className={inputClass}
-                    placeholder="e.g. Visit Our Website"
-                  />
+                  <input type="text" value={formData.ctaButtonText} onChange={(e) => setFormData({ ...formData, ctaButtonText: e.target.value })} className={inputClass} placeholder="e.g. Visit Our Website" />
                 </div>
                 <div>
                   <label className={labelClass}>Button URL</label>
-                  <input
-                    type="url"
-                    value={formData.ctaUrl}
-                    onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })}
-                    className={inputClass}
-                    placeholder="https://..."
-                  />
+                  <input type="url" value={formData.ctaUrl} onChange={(e) => setFormData({ ...formData, ctaUrl: e.target.value })} className={inputClass} placeholder="https://..." />
                 </div>
               </div>
             )}
@@ -457,7 +395,7 @@ export default function CreateActivityPage() {
                 disabled={loading}
                 className="flex-1 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-[#009B8A] hover:to-[#009B8A] disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition-all font-semibold text-[#16123D] text-base shadow-lg"
               >
-                {loading ? 'Creating...' : 'Create Activity'}
+                {loading ? 'Saving...' : 'Save Changes'}
               </button>
               <Link href={`/admin/campaign/${campaignId}`} className="flex-1">
                 <button type="button" className="w-full bg-[#16123D] hover:bg-[#0f0c2e] px-6 py-3 rounded-lg transition-all font-semibold text-white text-base border border-white/20 hover:border-white/30">

@@ -15,7 +15,18 @@ export default async function handler(
 
   if (req.method === 'GET') {
     try {
-      const { eventId } = req.query
+      const { eventId, id } = req.query
+
+      if (id) {
+        const activity = await prisma.activity.findUnique({
+          where: { id: id as string },
+          include: { zone: true },
+        })
+        if (!activity) {
+          return res.status(404).json({ error: 'Activity not found' })
+        }
+        return res.status(200).json(activity)
+      }
 
       const activities = await prisma.activity.findMany({
         where: {
@@ -35,10 +46,15 @@ export default async function handler(
 
   if (req.method === 'POST') {
     try {
-      const { eventId, zoneId, type, question, answers, pollOptions, surveyQuestions, ctaButtonText, ctaUrl } = req.body
+      const {
+        eventId, zoneId, type, title, description,
+        question, answers, pollOptions, surveyQuestions,
+        downloadUrl, downloadName, videoUrl, videoDuration,
+        raffleName, rafflePrize, ctaButtonText, ctaUrl,
+      } = req.body
 
-      if (!eventId || !zoneId || !type) {
-        return res.status(400).json({ error: 'Missing required fields' })
+      if (!eventId || !zoneId || !type || !title) {
+        return res.status(400).json({ error: 'Zone, type, and title are required' })
       }
 
       const activity = await prisma.activity.create({
@@ -46,12 +62,20 @@ export default async function handler(
           eventId,
           zoneId,
           type,
-          question: question || '',
+          title,
+          description: description || '',
+          ...(question !== undefined && { question }),
           ...(answers && { answers }),
           ...(pollOptions && { pollOptions }),
           ...(surveyQuestions && { surveyQuestions }),
-          ...(ctaButtonText && { ctaButtonText }),
-          ...(ctaUrl && { ctaUrl }),
+          ...(downloadUrl !== undefined && { downloadUrl }),
+          ...(downloadName !== undefined && { downloadName }),
+          ...(videoUrl !== undefined && { videoUrl }),
+          ...(videoDuration !== undefined && { videoDuration: videoDuration ? parseInt(videoDuration) : null }),
+          ...(raffleName !== undefined && { raffleName }),
+          ...(rafflePrize !== undefined && { rafflePrize }),
+          ...(ctaButtonText !== undefined && { ctaButtonText }),
+          ...(ctaUrl !== undefined && { ctaUrl }),
         },
       })
 
@@ -63,7 +87,12 @@ export default async function handler(
 
   if (req.method === 'PUT') {
     try {
-      const { id, type, question, answers, pollOptions, surveyQuestions } = req.body
+      const {
+        id, zoneId, type, title, description,
+        question, answers, pollOptions, surveyQuestions,
+        downloadUrl, downloadName, videoUrl, videoDuration,
+        raffleName, rafflePrize, ctaButtonText, ctaUrl,
+      } = req.body
 
       if (!id) {
         return res.status(400).json({ error: 'Activity ID required' })
@@ -72,11 +101,22 @@ export default async function handler(
       const activity = await prisma.activity.update({
         where: { id },
         data: {
+          ...(zoneId && { zoneId }),
           ...(type && { type }),
+          ...(title !== undefined && { title }),
+          ...(description !== undefined && { description }),
           ...(question !== undefined && { question }),
-          ...(answers && { answers }),
-          ...(pollOptions && { pollOptions }),
-          ...(surveyQuestions && { surveyQuestions }),
+          ...(answers !== undefined && { answers }),
+          ...(pollOptions !== undefined && { pollOptions }),
+          ...(surveyQuestions !== undefined && { surveyQuestions }),
+          ...(downloadUrl !== undefined && { downloadUrl }),
+          ...(downloadName !== undefined && { downloadName }),
+          ...(videoUrl !== undefined && { videoUrl }),
+          ...(videoDuration !== undefined && { videoDuration: videoDuration ? parseInt(videoDuration) : null }),
+          ...(raffleName !== undefined && { raffleName }),
+          ...(rafflePrize !== undefined && { rafflePrize }),
+          ...(ctaButtonText !== undefined && { ctaButtonText }),
+          ...(ctaUrl !== undefined && { ctaUrl }),
         },
       })
 

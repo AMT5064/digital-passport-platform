@@ -12,6 +12,8 @@ import {
   Plus,
   Edit2,
   Trash2,
+  Trophy,
+  QrCode,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -156,19 +158,19 @@ export default function CampaignDetailPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
   }
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Campaign Not Found</h1>
+          <h1 className="text-2xl font-oswald font-bold mb-4">Campaign Not Found</h1>
           <Link href="/admin">
-            <button className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg">
+            <button className="bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-6 py-2 rounded-lg font-semibold">
               Back to Admin
             </button>
           </Link>
@@ -178,7 +180,7 @@ export default function CampaignDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
       {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -189,7 +191,7 @@ export default function CampaignDetailPage() {
               </button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">{campaign.name}</h1>
+              <h1 className="text-2xl font-oswald font-bold">{campaign.name}</h1>
               <p className="text-xs text-gray-400">{campaign.venue}</p>
             </div>
           </div>
@@ -222,6 +224,7 @@ export default function CampaignDetailPage() {
             { id: 'zones', label: 'Zones', icon: MapPin },
             { id: 'activities', label: 'Activities', icon: Gamepad2 },
             { id: 'participants', label: 'Participants', icon: Users },
+            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
             { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           ].map((tab) => (
             <button
@@ -229,7 +232,7 @@ export default function CampaignDetailPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-400'
+                  ? 'border-[#00CBB3] text-[#00CBB3]'
                   : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
@@ -245,6 +248,7 @@ export default function CampaignDetailPage() {
           {activeTab === 'zones' && <ZonesTab campaignId={campaignId as string} zones={zones} onDeleteZone={handleDeleteZone} onRefresh={fetchCampaignData} />}
           {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onDeleteActivity={handleDeleteActivity} onRefresh={fetchCampaignData} />}
           {activeTab === 'participants' && <ParticipantsTab participants={participants} />}
+          {activeTab === 'leaderboard' && <LeaderboardTab participants={participants} />}
           {activeTab === 'analytics' && <AnalyticsTab campaign={campaign} />}
         </div>
       </div>
@@ -260,8 +264,8 @@ function StatCard({ icon: Icon, label, value }: any) {
           <p className="text-gray-400 text-sm mb-1">{label}</p>
           <p className="text-3xl font-bold">{value}</p>
         </div>
-        <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
-          <Icon className="w-6 h-6 text-blue-400" />
+        <div className="w-12 h-12 bg-[#00CBB3]/20 rounded-lg flex items-center justify-center">
+          <Icon className="w-6 h-6 text-[#00CBB3]" />
         </div>
       </div>
     </div>
@@ -294,8 +298,8 @@ function OverviewTab({ campaign, zones, activities, participants }: any) {
             <div>
               <p className="text-gray-400 text-sm mb-2">Status</p>
               <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                campaign.status === 'LIVE' ? 'bg-green-500/20 text-green-300' :
-                campaign.status === 'PUBLISHED' ? 'bg-blue-500/20 text-blue-300' :
+                campaign.status === 'LIVE' ? 'bg-[#00CBB3]/20 text-[#00CBB3]' :
+                campaign.status === 'PUBLISHED' ? 'bg-[#7600FF]/20 text-[#B266FF]' :
                 'bg-gray-500/20 text-gray-300'
               }`}>
                 {campaign.status}
@@ -339,7 +343,7 @@ function StatItem({ label, value }: any) {
 function QuickActionButton({ icon: Icon, label, href }: any) {
   return (
     <Link href={href}>
-      <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 hover:from-blue-500/30 hover:to-cyan-500/30 border border-blue-500/30 hover:border-blue-500/50 rounded-lg px-4 py-3 transition-all font-medium text-sm">
+      <button className="w-full flex items-center justify-center gap-2 bg-[#00CBB3]/20 hover:bg-[#00CBB3]/30 border border-[#00CBB3]/30 hover:border-[#00CBB3]/50 text-[#00CBB3] rounded-lg px-4 py-3 transition-all font-medium text-sm">
         <Icon className="w-4 h-4" />
         {label}
       </button>
@@ -352,9 +356,9 @@ function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold">Zones</h3>
+        <h3 className="text-lg font-oswald font-bold">Zones</h3>
         <Link href={`/admin/campaign/${campaignId}/zones/new`}>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
+          <button className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg font-semibold transition-colors">
             <Plus className="w-5 h-5" />
             New Zone
           </button>
@@ -362,7 +366,7 @@ function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
       </div>
 
       {zones.length === 0 ? (
-        <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-8 text-center">
+        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
           <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
           <p className="text-gray-400">No zones yet. Create one to get started!</p>
         </div>
@@ -372,15 +376,17 @@ function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
             <div key={zone.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold">{zone.name}</h4>
-                <span className="text-xs bg-emerald-600 text-white px-2 py-1 rounded font-semibold">{zone.points} pts</span>
+                <span className="text-xs bg-[#00CBB3] text-[#16123D] px-2 py-1 rounded font-semibold">{zone.points} pts</span>
               </div>
               {zone.description && <p className="text-sm text-gray-400 mb-2">{zone.description}</p>}
               <p className="text-xs text-gray-500 mb-3">QR: {zone.qrSlug}</p>
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 px-3 py-2 rounded text-sm transition-colors">
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
+                <Link href={`/admin/campaign/${campaignId}/zones/${zone.id}/edit`} className="flex-1">
+                  <button className="w-full flex items-center justify-center gap-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] hover:text-[#C68CFF] px-3 py-2 rounded text-sm transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                    Edit
+                  </button>
+                </Link>
                 <button onClick={() => onDeleteZone(zone.id, zone.name)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Delete
@@ -412,9 +418,9 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-bold">Activities</h3>
+        <h3 className="text-lg font-oswald font-bold">Activities</h3>
         <Link href={`/admin/campaign/${campaignId}/activities/new`}>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
+          <button className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg font-semibold transition-colors">
             <Plus className="w-5 h-5" />
             New Activity
           </button>
@@ -422,7 +428,7 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
       </div>
 
       {activities.length === 0 ? (
-        <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-8 text-center">
+        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
           <Gamepad2 className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
           <p className="text-gray-400">No activities yet. Create one to engage participants!</p>
         </div>
@@ -431,16 +437,21 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
           {activities.map((activity) => (
             <div key={activity.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
               <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold">{activity.zone?.name}</h4>
-                <span className={`text-xs px-2 py-1 rounded font-semibold ${getActivityTypeBadge(activity.type)}`}>{activity.type}</span>
+                <div>
+                  <h4 className="font-bold">{activity.title || 'Untitled Activity'}</h4>
+                  <p className="text-xs text-gray-500">{activity.zone?.name}</p>
+                </div>
+                <span className={`text-xs px-2 py-1 rounded font-semibold flex-shrink-0 ${getActivityTypeBadge(activity.type)}`}>{activity.type}</span>
               </div>
-              {activity.question && <p className="text-sm text-gray-300 mb-3">{activity.question}</p>}
+              {activity.description && <p className="text-sm text-gray-300 mb-3">{activity.description}</p>}
               <div className="flex gap-2">
-                <button className="flex-1 flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 px-3 py-2 rounded text-sm transition-colors">
-                  <Edit2 className="w-4 h-4" />
-                  Edit
-                </button>
-                <button onClick={() => onDeleteActivity(activity.id, activity.type)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
+                <Link href={`/admin/campaign/${campaignId}/activities/${activity.id}/edit`} className="flex-1">
+                  <button className="w-full flex items-center justify-center gap-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] hover:text-[#C68CFF] px-3 py-2 rounded text-sm transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                    Edit
+                  </button>
+                </Link>
+                <button onClick={() => onDeleteActivity(activity.id, activity.title)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
                   <Trash2 className="w-4 h-4" />
                   Delete
                 </button>
@@ -477,14 +488,14 @@ function ParticipantsTab({ participants }: any) {
       </div>
 
       {participants.length === 0 ? (
-        <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 rounded-xl p-8 text-center">
+        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
           <Users className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
           <p className="text-gray-400">No participants yet</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-white/10">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-blue-900/40 to-purple-900/40">
+            <thead className="bg-[#16123D]">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold">Name</th>
                 <th className="px-6 py-3 text-left font-semibold">Email</th>
@@ -500,12 +511,55 @@ function ParticipantsTab({ participants }: any) {
                     <td className="px-6 py-4 font-semibold">{p.firstName} {p.lastName}</td>
                     <td className="px-6 py-4 text-sm text-gray-400">{p.email}</td>
                     <td className="px-6 py-4 text-sm">{p.scans.length}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-yellow-400">{points}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-[#FFB800]">{points}</td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LeaderboardTab({ participants }: any) {
+  const ranked = [...participants]
+    .map((p: any) => ({
+      ...p,
+      points: p.scans.reduce((s: number, scan: any) => s + scan.pointsEarned, 0),
+    }))
+    .sort((a: any, b: any) => b.points - a.points)
+
+  const medalColor = (rank: number) => {
+    if (rank === 0) return 'text-[#FFB800]'
+    if (rank === 1) return 'text-[#C0C0C0]'
+    if (rank === 2) return 'text-[#CD7F32]'
+    return 'text-gray-500'
+  }
+
+  return (
+    <div>
+      <h3 className="text-lg font-oswald font-bold mb-6">Leaderboard</h3>
+      {ranked.length === 0 ? (
+        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
+          <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
+          <p className="text-gray-400">No rankings yet. Rankings appear once participants start scanning zones.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {ranked.map((p: any, idx: number) => (
+            <div key={p.id} className={`flex items-center gap-4 p-4 rounded-xl border ${idx < 3 ? 'bg-gradient-to-r from-[#00CBB3]/10 to-[#7600FF]/10 border-[#00CBB3]/30' : 'bg-white/5 border-white/10'}`}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-oswald font-bold text-lg ${medalColor(idx)} ${idx < 3 ? 'bg-white/10' : ''}`}>
+                {idx < 3 ? <Trophy className="w-5 h-5" /> : idx + 1}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">{p.firstName} {p.lastName}</p>
+                <p className="text-xs text-gray-400">{p.scans.length} zones scanned</p>
+              </div>
+              <p className="text-xl font-oswald font-bold text-[#FFB800]">{p.points} pts</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
