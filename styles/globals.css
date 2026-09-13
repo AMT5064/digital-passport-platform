@@ -1,43 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Primary Brand Colors */
-  --primary: #2563eb;
-  --primary-light: #3b82f6;
-  --primary-dark: #1e40af;
+  /* Primary Brand Colors - Cosmos Theme */
+  --primary: #00CBB3;
+  --primary-light: #1EDCC8;
+  --primary-dark: #009B8A;
 
   /* Secondary Colors */
-  --secondary: #10b981;
-  --success: #059669;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #06b6d4;
+  --secondary-dark: #201751;
+  --secondary-navy: #16123D;
+  --secondary-purple: #7600FF;
+  --warning: #FFB800;
+  --accent-orange: #F96A32;
+  --accent-teal: #00CBB3;
 
   /* Neutral Colors */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  --gray-50: #EDEDED;
+  --gray-100: #E8E8E8;
+  --gray-200: #D5D5D5;
+  --gray-300: #C0C0C0;
+  --gray-400: #A0A0A0;
+  --gray-500: #808080;
+  --gray-600: #606060;
+  --gray-700: #404040;
+  --gray-800: #201751;
+  --gray-900: #16123D;
 
   /* Background & Text */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --text-tertiary: #9ca3af;
+  --bg-primary: #EDEDED;
+  --bg-secondary: #201751;
+  --text-primary: #16123D;
+  --text-secondary: #605050;
+  --text-tertiary: #A0A0A0;
 
   /* Borders */
-  --border-color: #e5e7eb;
+  --border-color: #D5D5D5;
 
   /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -45,6 +47,21 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Fonts */
+  --font-oswald: 'Oswald', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Oswald', sans-serif;
+  font-weight: 600;
 }
 
 [data-theme='dark'] {
