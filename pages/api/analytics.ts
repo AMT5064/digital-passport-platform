@@ -90,7 +90,7 @@ export default async function handler(
     // Get hourly traffic
     const scans = await prisma.scan.findMany({
       where: { eventId },
-      select: { createdAt: true },
+      select: { createdAt: true, completedAt: true },
     })
 
     const hourlyTraffic: { [key: string]: { visits: number; completions: number } } = {}

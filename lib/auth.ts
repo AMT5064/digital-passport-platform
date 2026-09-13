@@ -4,6 +4,32 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from './prisma'
 import bcrypt from 'bcrypt'
 
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string
+      role: string
+      email: string
+      name: string
+      image: string | null
+    }
+  }
+  interface User {
+    id: string
+    role: string
+    email: string
+    name: string
+    image: string | null
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string
+    role: string
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
