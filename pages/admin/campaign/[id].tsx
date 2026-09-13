@@ -52,9 +52,20 @@ export default function CampaignDetailPage() {
     if (status === 'unauthenticated') {
       router.push('/login')
     } else if (campaignId) {
+      // Set active tab from query parameter if provided
+      if (router.query.tab) {
+        setActiveTab(router.query.tab as string)
+      }
       fetchCampaignData()
     }
   }, [status, campaignId, router])
+
+  // Update tab when query parameter changes
+  useEffect(() => {
+    if (router.query.tab) {
+      setActiveTab(router.query.tab as string)
+    }
+  }, [router.query.tab])
 
   const fetchCampaignData = async () => {
     try {
