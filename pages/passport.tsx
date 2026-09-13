@@ -24,8 +24,10 @@ export default function PassportPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
+    } else if (session?.user?.role && (session.user.role === 'SUPER_ADMIN' || session.user.role === 'EVENT_ADMIN')) {
+      router.push('/admin')
     }
-  }, [status, router])
+  }, [status, session, router])
 
   useEffect(() => {
     if (session?.user && status === 'authenticated') {
