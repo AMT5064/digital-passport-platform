@@ -37,7 +37,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-secondary-purple to-secondary flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] via-[#7600FF] to-[#201751] flex items-center justify-center px-4 py-12">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
@@ -52,10 +52,10 @@ export default function Login() {
         </Link>
 
         {/* Card */}
-        <div className="bg-gradient-to-br from-blue-900/40 to-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl animate-scale-in">
+        <div className="bg-gradient-to-br from-[#16123D]/40 to-[#201751]/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl animate-scale-in">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-14 h-14 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Lock className="w-7 h-7 text-slate-900" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
@@ -136,7 +136,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="btn btn-primary w-full mt-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
+              className="btn btn-primary w-full mt-8 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-[#009B8A] hover:to-[#009B8A] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -155,7 +155,7 @@ export default function Login() {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gradient-to-br from-blue-900/40 to-slate-900/40 text-gray-400">
+              <span className="px-2 bg-gradient-to-br from-[#16123D]/40 to-[#201751]/40 text-gray-400">
                 New here?
               </span>
             </div>
