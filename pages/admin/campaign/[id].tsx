@@ -152,9 +152,9 @@ export default function CampaignDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary to-secondary-navy text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white">
       {/* Header */}
-      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-secondary-navy/80 to-secondary/80">
+      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/admin">
@@ -328,7 +328,7 @@ function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold">Zones</h3>
         <Link href={`/admin/campaign/${campaignId}/zones/new`}>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent-teal hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
+          <button className="flex items-center gap-2 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
             <Plus className="w-5 h-5" />
             New Zone
           </button>
@@ -388,7 +388,7 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-lg font-bold">Activities</h3>
         <Link href={`/admin/campaign/${campaignId}/activities/new`}>
-          <button className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent-teal hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
+          <button className="flex items-center gap-2 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-primary-dark hover:to-primary-dark px-4 py-2 rounded-lg font-semibold">
             <Plus className="w-5 h-5" />
             New Activity
           </button>
