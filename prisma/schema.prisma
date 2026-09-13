@@ -88,7 +88,7 @@ model Zone {
   qrSlug          String      @unique
   eventId         String
   event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  activity        Activity?
+  activities      Activity[]
   scans           Scan[]
   active          Boolean     @default(true)
   points          Int         @default(10)
@@ -102,7 +102,7 @@ model Zone {
 model Activity {
   id              String      @id @default(cuid())
   type            ActivityType
-  zoneId          String      @unique
+  zoneId          String
   zone            Zone        @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   eventId         String
   event           Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
