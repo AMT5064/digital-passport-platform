@@ -12,7 +12,7 @@ interface ZoneData {
     image: string
     points: number
   }
-  activity: any
+  activities: any[]
   event: {
     id: string
     name: string
@@ -53,6 +53,8 @@ export default function ScanPage() {
     fetchZone()
   }, [slug])
 
+  const activity = zoneData?.activities?.[0]
+
   const handleCompleteActivity = async () => {
     if (!session?.user || !zoneData) return
 
@@ -63,7 +65,7 @@ export default function ScanPage() {
       const response = await axios.post(`/api/scan/${slug}`, {
         completedAt: new Date().toISOString(),
         activityData: {
-          type: zoneData.activity.type,
+          type: activity.type,
           quizAnswer,
           pollAnswer,
         },
@@ -186,40 +188,40 @@ export default function ScanPage() {
 
           {/* Activity Content */}
           <div className="p-6">
-            {zoneData.activity?.type === 'QUIZ' && (
+            {activity?.type === 'QUIZ' && (
               <QuizActivity
-                activity={zoneData.activity}
+                activity={activity}
                 answer={quizAnswer}
                 setAnswer={setQuizAnswer}
               />
             )}
 
-            {zoneData.activity?.type === 'POLL' && (
+            {activity?.type === 'POLL' && (
               <PollActivity
-                activity={zoneData.activity}
+                activity={activity}
                 answer={pollAnswer}
                 setAnswer={setPollAnswer}
               />
             )}
 
-            {zoneData.activity?.type === 'SURVEY' && (
-              <SurveyActivity activity={zoneData.activity} />
+            {activity?.type === 'SURVEY' && (
+              <SurveyActivity activity={activity} />
             )}
 
-            {zoneData.activity?.type === 'VIDEO' && (
-              <VideoActivity activity={zoneData.activity} />
+            {activity?.type === 'VIDEO' && (
+              <VideoActivity activity={activity} />
             )}
 
-            {zoneData.activity?.type === 'RAFFLE' && (
-              <RaffleActivity activity={zoneData.activity} />
+            {activity?.type === 'RAFFLE' && (
+              <RaffleActivity activity={activity} />
             )}
 
-            {zoneData.activity?.type === 'CUSTOM_CTA' && (
-              <CustomCTAActivity activity={zoneData.activity} />
+            {activity?.type === 'CUSTOM_CTA' && (
+              <CustomCTAActivity activity={activity} />
             )}
 
-            {zoneData.activity?.type === 'DOWNLOAD' && (
-              <DownloadActivity activity={zoneData.activity} />
+            {activity?.type === 'DOWNLOAD' && (
+              <DownloadActivity activity={activity} />
             )}
 
             {/* Submit Button */}

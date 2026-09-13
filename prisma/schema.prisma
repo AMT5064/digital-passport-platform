@@ -45,7 +45,6 @@ model Admin {
   event         Event?      @relation("EventAdmins", fields: [eventId], references: [id], onDelete: SetNull)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  auditLogs     AuditLog[]
 
   @@index([eventId])
   @@index([email])
@@ -277,14 +276,17 @@ model EventSettings {
 
 model AuditLog {
   id              String      @id @default(cuid())
-  adminId         String
-  admin           Admin       @relation(fields: [adminId], references: [id], onDelete: Cascade)
   action          String
-  resource        String
-  details         Json?
+  entityType      String
+  entityId        String
+  entityName      String?
+  campaignId      String?
+  userId          String?
+  changes         Json?
   createdAt       DateTime    @default(now())
 
-  @@index([adminId])
+  @@index([campaignId])
+  @@index([entityType])
   @@index([createdAt])
 }
 

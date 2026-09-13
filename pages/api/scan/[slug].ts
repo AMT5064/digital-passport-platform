@@ -24,7 +24,7 @@ export default async function handler(
 
     const zone = await prisma.zone.findUnique({
       where: { qrSlug: slug },
-      include: { activity: true, event: true },
+      include: { activities: true, event: true },
     })
 
     if (!zone) {
@@ -46,7 +46,7 @@ export default async function handler(
             image: zone.image,
             points: zone.points,
           },
-          activity: zone.activity,
+          activities: zone.activities,
           event: {
             id: zone.event.id,
             name: zone.event.name,

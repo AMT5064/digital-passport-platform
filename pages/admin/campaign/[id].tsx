@@ -81,6 +81,32 @@ export default function CampaignDetailPage() {
     }
   }
 
+  const handleDeleteZone = async (id: string, name?: string) => {
+    if (!confirm('Delete this zone? All activities linked to this zone will also be deleted. This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/zones-delete?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        await logAuditAction('delete', 'zone', id, name)
+        fetchCampaignData()
+      }
+    } catch (error) {
+      console.error('Error deleting zone:', error)
+    }
+  }
+
+  const handleDeleteActivity = async (id: string, name?: string) => {
+    if (!confirm('Delete this activity? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/activities-delete?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        await logAuditAction('delete', 'activity', id, name)
+        fetchCampaignData()
+      }
+    } catch (error) {
+      console.error('Error deleting activity:', error)
+    }
+  }
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')

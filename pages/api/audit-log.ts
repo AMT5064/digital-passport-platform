@@ -15,7 +15,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           campaignId,
           changes: changes || {},
           userId: userId || 'system',
-          timestamp: new Date(),
         },
       })
 
@@ -30,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ...(campaignId && { campaignId: campaignId as string }),
           ...(entityType && { entityType: entityType as string }),
         },
-        orderBy: { timestamp: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: parseInt(limit as string),
       })
 

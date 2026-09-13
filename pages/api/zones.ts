@@ -22,7 +22,7 @@ export default async function handler(
           ...(eventId && { eventId: eventId as string }),
         },
         include: {
-          activity: true,
+          activities: true,
           _count: {
             select: { scans: true },
           },

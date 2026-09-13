@@ -115,7 +115,7 @@ export default function CampaignSettingsPage() {
                     formData[option.key as keyof typeof formData] ? 'bg-green-600/70' : 'bg-gray-600/70'
                   } border border-white/20`}
                   role="switch"
-                  aria-checked={formData[option.key as keyof typeof formData]}
+                  aria-checked={Boolean(formData[option.key as keyof typeof formData])}
                 >
                   <div
                     className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform shadow-lg ${
