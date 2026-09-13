@@ -37,10 +37,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-secondary via-secondary-purple to-secondary flex items-center justify-center px-4 py-12">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
 
@@ -169,7 +169,7 @@ export default function Login() {
           </Link>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <div className="mt-6 p-4 bg-primary/10 border border-blue-500/30 rounded-lg">
             <p className="text-xs font-semibold text-blue-300 mb-2">Demo Credentials:</p>
             <p className="text-xs text-gray-300"><strong>Email:</strong> john@example.com</p>
             <p className="text-xs text-gray-300"><strong>Password:</strong> User@123</p>

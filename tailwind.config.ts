@@ -8,8 +8,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#3B82F6',
-        secondary: '#10B981',
+        // Cosmos Events Premium Palette
+        primary: '#00CBB3',
+        'primary-dark': '#009B8A',
+        'primary-light': '#1EDCC8',
+        secondary: '#201751',
+        'secondary-navy': '#16123D',
+        'secondary-purple': '#7600FF',
+        accent: {
+          gold: '#FFB800',
+          orange: '#F96A32',
+          teal: '#00CBB3',
+        },
+        neutral: {
+          light: '#EDEDED',
+          dark: '#201751',
+          navy: '#16123D',
+        },
+      },
+      fontFamily: {
+        oswald: ['Oswald', 'sans-serif'],
+        poppins: ['Poppins', 'sans-serif'],
       },
     },
   },
