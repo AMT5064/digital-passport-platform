@@ -74,11 +74,11 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-900 to-slate-900 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] via-[#16123D] to-[#201751] flex items-center justify-center px-4 py-12">
       {/* Animated background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#00CBB3]/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#00CBB3]/20 rounded-full blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-lg relative z-10">
@@ -89,11 +89,11 @@ export default function Register() {
         </Link>
 
         {/* Card */}
-        <div className="bg-gradient-to-br from-emerald-900/40 to-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl animate-scale-in">
+        <div className="bg-gradient-to-br from-[#16123D]/60 to-[#201751]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-10 shadow-2xl animate-scale-in">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <UserPlus className="w-7 h-7 text-slate-900" />
+            <div className="w-14 h-14 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <UserPlus className="w-7 h-7 text-[#16123D]" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Join Us</h1>
             <p className="text-gray-400">Create your account to start engaging</p>
@@ -101,9 +101,9 @@ export default function Register() {
 
           {/* Success Message */}
           {success && (
-            <div className="mb-6 p-4 bg-emerald-500/15 border border-emerald-500/50 rounded-lg flex items-center gap-3 animate-slide-in">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-              <p className="text-emerald-300 text-sm font-medium">Account created successfully!</p>
+            <div className="mb-6 p-4 bg-[#00CBB3]/15 border border-[#00CBB3]/50 rounded-lg flex items-center gap-3 animate-slide-in">
+              <CheckCircle2 className="w-5 h-5 text-[#00CBB3] flex-shrink-0" />
+              <p className="text-[#00CBB3] text-sm font-medium">Account created successfully!</p>
             </div>
           )}
 
@@ -301,7 +301,7 @@ export default function Register() {
             <button
               type="submit"
               disabled={loading || success}
-              className="btn btn-primary w-full mt-8 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
+              className="btn btn-primary w-full mt-8 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-[#009B8A] hover:to-[#009B8A] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all font-semibold"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -322,14 +322,14 @@ export default function Register() {
           {/* Sign In Link */}
           <p className="text-center text-gray-400 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium">
+            <Link href="/login" className="text-[#00CBB3] hover:text-[#00CBB3] font-medium">
               Sign In
             </Link>
           </p>
 
           {/* Footer */}
           <p className="text-center text-gray-500 text-xs mt-6">
-            By creating an account, you agree to our <a href="#" className="text-emerald-400 hover:text-emerald-300">Terms</a> and <a href="#" className="text-emerald-400 hover:text-emerald-300">Privacy Policy</a>
+            By creating an account, you agree to our <a href="#" className="text-[#00CBB3] hover:text-[#00CBB3]">Terms</a> and <a href="#" className="text-[#00CBB3] hover:text-[#00CBB3]">Privacy Policy</a>
           </p>
         </div>
       </div>

@@ -78,9 +78,9 @@ export default function AdminDashboard() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary via-secondary-purple to-secondary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] via-[#7600FF] to-[#201751]">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-300">Loading your dashboard...</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
   if (!session?.user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary via-secondary-purple to-secondary text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] via-[#7600FF] to-[#201751] text-white font-poppins">
       {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#201751]/50 to-[#16123D]/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
               {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-lg flex items-center justify-center font-bold">
+              <div className="w-10 h-10 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] rounded-lg flex items-center justify-center font-bold text-[#16123D]">
                 DP
               </div>
               <div>
@@ -133,9 +133,9 @@ export default function AdminDashboard() {
         <main className="space-y-8 animate-slide-in">
             {/* Welcome Section */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-2xl"></div>
-              <div className="relative bg-gradient-to-br from-blue-900/40 to-purple-900/40 backdrop-blur border border-white/10 rounded-2xl p-8">
-                <h2 className="text-3xl font-bold mb-2">Welcome back, {session.user.name}!</h2>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#00CBB3]/10 to-[#7600FF]/10 rounded-2xl blur-2xl"></div>
+              <div className="relative bg-gradient-to-br from-[#16123D]/60 to-[#201751]/60 backdrop-blur border border-white/10 rounded-2xl p-8">
+                <h2 className="text-3xl font-oswald font-bold mb-2">Welcome back, {session.user.name}!</h2>
                 <p className="text-gray-300">Here&apos;s what&apos;s happening with your events today</p>
               </div>
             </div>
@@ -147,40 +147,40 @@ export default function AdminDashboard() {
                 label="Active Events"
                 value={stats.totalEvents}
                 trend={`${stats.totalEvents} total`}
-                color="from-blue-500 to-cyan-500"
+                color="from-[#00CBB3] to-[#00CBB3]"
               />
               <StatBox
                 icon={MapPin}
                 label="Total Zones"
                 value={stats.totalZones}
                 trend={`${stats.totalZones} zones`}
-                color="from-emerald-500 to-teal-500"
+                color="from-[#7600FF] to-[#7600FF]"
               />
               <StatBox
                 icon={Users}
                 label="Participants"
                 value={stats.totalParticipants}
                 trend={`${stats.totalParticipants} attendees`}
-                color="from-purple-500 to-pink-500"
+                color="from-[#FFB800] to-[#FFB800]"
               />
               <StatBox
                 icon={Activity}
                 label="Total Scans"
                 value={stats.totalScans}
                 trend={`${stats.todaysScans} today`}
-                color="from-orange-500 to-red-500"
+                color="from-[#F96A32] to-[#F96A32]"
               />
             </div>
 
             {/* Campaigns Section */}
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold flex items-center gap-2">
+                <h3 className="text-lg font-oswald font-bold flex items-center gap-2">
                   <Calendar className="w-5 h-5" />
                   Your Campaigns
                 </h3>
                 <Link href="/admin/events">
-                  <button className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 px-4 py-2 rounded-lg transition-all font-semibold text-sm">
+                  <button className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg transition-colors font-semibold text-sm">
                     <Plus className="w-4 h-4" />
                     New Campaign
                   </button>
@@ -188,12 +188,12 @@ export default function AdminDashboard() {
               </div>
 
               {campaigns.length === 0 ? (
-                <div className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 backdrop-blur border border-white/10 rounded-xl p-12 text-center">
+                <div className="bg-gradient-to-br from-[#16123D]/40 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-xl p-12 text-center">
                   <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4 opacity-50" />
-                  <h4 className="text-xl font-bold mb-2">No Campaigns Yet</h4>
+                  <h4 className="text-xl font-oswald font-bold mb-2">No Campaigns Yet</h4>
                   <p className="text-gray-400 mb-6">Create your first campaign to get started</p>
                   <Link href="/admin/events">
-                    <button className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 px-6 py-3 rounded-lg transition-all font-semibold inline-flex items-center gap-2">
+                    <button className="bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-6 py-3 rounded-lg transition-colors font-semibold inline-flex items-center gap-2">
                       <Plus className="w-5 h-5" />
                       Create First Campaign
                     </button>
@@ -206,12 +206,12 @@ export default function AdminDashboard() {
                       <a className="group bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all cursor-pointer">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
-                            <h4 className="text-lg font-bold group-hover:text-cyan-400 transition-colors mb-2">{campaign.name}</h4>
+                            <h4 className="text-lg font-bold group-hover:text-[#00CBB3] transition-colors mb-2">{campaign.name}</h4>
                             {campaign.venue && <p className="text-sm text-gray-400 flex items-center gap-1"><MapPin className="w-3 h-3" /> {campaign.venue}</p>}
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                            campaign.status === 'LIVE' ? 'bg-green-500/20 text-green-300' :
-                            campaign.status === 'PUBLISHED' ? 'bg-primary/20 text-blue-300' :
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
+                            campaign.status === 'LIVE' ? 'bg-[#00CBB3]/20 text-[#00CBB3]' :
+                            campaign.status === 'PUBLISHED' ? 'bg-[#7600FF]/20 text-[#B266FF]' :
                             'bg-gray-500/20 text-gray-300'
                           }`}>
                             {campaign.status}
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
 
                         <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
                           <span className="text-xs text-gray-500">Click to manage</span>
-                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-cyan-400 transition-colors" />
+                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#00CBB3] transition-colors" />
                         </div>
                       </a>
                     </Link>
@@ -267,7 +267,7 @@ function StatBox({
   return (
     <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all group">
       <div className={`w-12 h-12 bg-gradient-to-r ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        <Icon className="w-6 h-6 text-white" />
+        <Icon className="w-6 h-6 text-[#16123D]" />
       </div>
       <p className="text-gray-400 text-sm mb-1">{label}</p>
       <p className="text-3xl font-bold mb-2">{value}</p>

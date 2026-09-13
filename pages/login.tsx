@@ -56,7 +56,7 @@ export default function Login() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Lock className="w-7 h-7 text-slate-900" />
+              <Lock className="w-7 h-7 text-[#16123D]" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-gray-400">Sign in to your account to continue</p>
@@ -127,7 +127,7 @@ export default function Login() {
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-600 bg-white/5" />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="text-blue-400 hover:text-blue-300 transition-colors font-medium">
+              <a href="#" className="text-[#00CBB3] hover:text-[#1EDCC8] transition-colors font-medium">
                 Forgot password?
               </a>
             </div>
@@ -169,8 +169,8 @@ export default function Login() {
           </Link>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-primary/10 border border-blue-500/30 rounded-lg">
-            <p className="text-xs font-semibold text-blue-300 mb-2">Demo Credentials:</p>
+          <div className="mt-6 p-4 bg-[#00CBB3]/10 border border-[#00CBB3]/30 rounded-lg">
+            <p className="text-xs font-semibold text-[#00CBB3] mb-2">Demo Credentials:</p>
             <p className="text-xs text-gray-300"><strong>Email:</strong> john@example.com</p>
             <p className="text-xs text-gray-300"><strong>Password:</strong> User@123</p>
           </div>
@@ -178,7 +178,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-center text-gray-400 text-sm mt-8">
-          By signing in, you agree to our <a href="#" className="text-blue-400 hover:text-blue-300">Terms</a> and <a href="#" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>
+          By signing in, you agree to our <a href="#" className="text-[#00CBB3] hover:text-[#1EDCC8]">Terms</a> and <a href="#" className="text-[#00CBB3] hover:text-[#1EDCC8]">Privacy Policy</a>
         </p>
       </div>
     </div>
