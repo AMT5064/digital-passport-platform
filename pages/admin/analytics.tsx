@@ -1,167 +1,169 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { ArrowLeft, TrendingUp, Users, Zap, Target } from 'lucide-react'
 
 export default function AnalyticsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
-  // Mock analytics data
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/login')
+    } else {
+      fetchAnalytics()
+    }
+  }, [status, router])
+
+  const fetchAnalytics = async () => {
+    try {
+      const response = await fetch('/api/dashboard-stats')
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (status === 'loading' || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  // Mock hourly data for charts
   const hourlyData = [
-    { hour: '9:00', visits: 45, completions: 38 },
-    { hour: '10:00', visits: 52, completions: 44 },
-    { hour: '11:00', visits: 48, completions: 41 },
-    { hour: '12:00', visits: 61, completions: 52 },
-    { hour: '13:00', visits: 55, completions: 47 },
-    { hour: '14:00', visits: 67, completions: 58 },
-    { hour: '15:00', visits: 72, completions: 63 },
-  ]
-
-  const zoneData = [
-    { name: 'Hall A', visits: 120, completions: 115 },
-    { name: 'Hall B', visits: 98, completions: 92 },
-    { name: 'Hall C', visits: 145, completions: 138 },
-    { name: 'Networking', visits: 87, completions: 81 },
+    { hour: '9:00', scans: 12, completions: 10 },
+    { hour: '10:00', scans: 19, completions: 15 },
+    { hour: '11:00', scans: 15, completions: 12 },
+    { hour: '12:00', scans: 25, completions: 22 },
+    { hour: '13:00', scans: 22, completions: 18 },
+    { hour: '14:00', scans: 29, completions: 25 },
+    { hour: '15:00', scans: 31, completions: 28 },
   ]
 
   const activityData = [
-    { name: 'Quiz', value: 280 },
-    { name: 'Poll', value: 250 },
-    { name: 'Survey', value: 180 },
-    { name: 'Raffle', value: 140 },
+    { name: 'Scans', value: stats?.totalScans || 0, color: '#3B82F6' },
+    { name: 'Participants', value: stats?.totalParticipants || 0, color: '#10B981' },
+    { name: 'Zones', value: stats?.totalZones || 0, color: '#F59E0B' },
   ]
 
-  const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
-
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
       {/* Header */}
-      <header className="bg-blue-800 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold">📊 Analytics</h1>
-          <Link href="/admin">
-            <button className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded">
-              Back to Admin
-            </button>
-          </Link>
+      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-blue-900/50 to-slate-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/admin">
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+            </Link>
+            <div className="flex items-center gap-3">
+              <TrendingUp className="w-8 h-8 text-orange-400" />
+              <div>
+                <h1 className="text-2xl font-bold">Analytics & Reports</h1>
+                <p className="text-xs text-gray-400">Event engagement metrics</p>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <MetricCard label="Total Participants" value="245" />
-          <MetricCard label="Unique Visitors" value="198" />
-          <MetricCard label="Total Scans" value="450" />
-          <MetricCard label="Completion Rate" value="87%" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <MetricCard
+            icon={Zap}
+            label="Total Scans"
+            value={stats?.totalScans || 0}
+            trend={`${stats?.todaysScans || 0} today`}
+            color="from-orange-500 to-red-500"
+          />
+          <MetricCard
+            icon={Users}
+            label="Total Participants"
+            value={stats?.totalParticipants || 0}
+            trend="Active attendees"
+            color="from-purple-500 to-pink-500"
+          />
+          <MetricCard
+            icon={Target}
+            label="Total Zones"
+            value={stats?.totalZones || 0}
+            trend="Active locations"
+            color="from-emerald-500 to-teal-500"
+          />
+          <MetricCard
+            icon={TrendingUp}
+            label="Engagement Rate"
+            value={stats?.totalParticipants > 0 ? Math.round((stats?.totalScans / (stats?.totalParticipants * stats?.totalZones)) * 100) || 0 : 0}
+            trend="%"
+            color="from-blue-500 to-cyan-500"
+          />
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Hourly Traffic */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Traffic by Hour</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Hourly Scans Chart */}
+          <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4">Hourly Activity</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={hourlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="hour" stroke="rgba(255,255,255,0.5)" />
+                <YAxis stroke="rgba(255,255,255,0.5)" />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', border: 'none', borderRadius: '8px' }} />
                 <Legend />
-                <Line type="monotone" dataKey="visits" stroke="#3B82F6" />
-                <Line type="monotone" dataKey="completions" stroke="#10B981" />
+                <Line type="monotone" dataKey="scans" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6' }} />
+                <Line type="monotone" dataKey="completions" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Zone Performance */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Zone Performance</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={zoneData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="visits" fill="#3B82F6" />
-                <Bar dataKey="completions" fill="#10B981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
           {/* Activity Distribution */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Activity Distribution</h3>
+          <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4">Activity Distribution</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={activityData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
+                <Pie data={activityData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} fill="#8884d8" dataKey="value">
                   {activityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(15,23,42,0.9)', border: 'none', borderRadius: '8px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Zone Details Table */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h3 className="text-xl font-bold mb-4">Zone Details</h3>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left">Zone</th>
-                  <th className="px-4 py-2 text-right">Visits</th>
-                  <th className="px-4 py-2 text-right">Completion</th>
-                  <th className="px-4 py-2 text-right">Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {zoneData.map((zone) => (
-                  <tr key={zone.name} className="border-t">
-                    <td className="px-4 py-2">{zone.name}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{zone.visits}</td>
-                    <td className="px-4 py-2 text-right font-semibold">{zone.completions}</td>
-                    <td className="px-4 py-2 text-right text-green-600 font-semibold">
-                      {Math.round((zone.completions / zone.visits) * 100)}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
 
-        {/* Export Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h3 className="text-xl font-bold mb-4">Export Data</h3>
-          <div className="flex gap-4">
-            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
-              📥 Export as CSV
-            </button>
-            <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700">
-              📊 Export as PDF
-            </button>
-            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
-              📈 Export Excel
-            </button>
+        {/* Summary Stats */}
+        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
+          <h3 className="text-lg font-bold mb-6">Summary Statistics</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatSummary
+              label="Average Scans per Participant"
+              value={stats?.totalParticipants > 0 ? (stats?.totalScans / stats?.totalParticipants).toFixed(1) : '0'}
+              change="+12% from last event"
+            />
+            <StatSummary
+              label="Zones Coverage"
+              value={`${stats?.totalZones || 0}`}
+              change="All zones active"
+            />
+            <StatSummary
+              label="Peak Hour"
+              value="3:00 PM"
+              change="15 scans/hour"
+            />
           </div>
         </div>
       </div>
@@ -169,11 +171,25 @@ export default function AnalyticsPage() {
   )
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({ icon: Icon, label, value, trend, color }: any) {
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-      <p className="text-gray-600 text-sm mb-2">{label}</p>
-      <p className="text-4xl font-bold text-blue-600">{value}</p>
+    <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all group">
+      <div className={`w-12 h-12 bg-gradient-to-r ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <p className="text-gray-400 text-sm mb-1">{label}</p>
+      <p className="text-3xl font-bold">{value}</p>
+      <p className="text-xs text-gray-500 mt-2">{trend}</p>
+    </div>
+  )
+}
+
+function StatSummary({ label, value, change }: any) {
+  return (
+    <div className="bg-white/5 rounded-lg p-4">
+      <p className="text-gray-400 text-sm mb-2">{label}</p>
+      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-xs text-green-400 mt-2">{change}</p>
     </div>
   )
 }
