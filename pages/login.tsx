@@ -46,11 +46,9 @@ export default function Login() {
 
       <div className="w-full max-w-md relative z-10">
         {/* Back Link */}
-        <Link href="/">
-          <a className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-8 font-medium">
-            <ArrowRight className="w-4 h-4 rotate-180" />
-            Back to home
-          </a>
+        <Link href="/" className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-8 font-medium">
+          <ArrowRight className="w-4 h-4 rotate-180" />
+          Back to home
         </Link>
 
         {/* Card */}
@@ -182,25 +180,6 @@ export default function Login() {
         <p className="text-center text-gray-400 text-sm mt-8">
           By signing in, you agree to our <a href="#" className="text-blue-400 hover:text-blue-300">Terms</a> and <a href="#" className="text-blue-400 hover:text-blue-300">Privacy Policy</a>
         </p>
-      </div>
-    </div>
-  )
-}
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link href="/register" className="text-blue-600 hover:underline font-semibold">
-              Register here
-            </Link>
-          </p>
-        </div>
-
-        <div className="mt-4 p-4 bg-gray-100 rounded text-sm text-gray-600">
-          <p className="font-semibold mb-2">Demo Credentials:</p>
-          <p>Email: john@example.com</p>
-          <p>Password: User@123</p>
-        </div>
       </div>
     </div>
   )

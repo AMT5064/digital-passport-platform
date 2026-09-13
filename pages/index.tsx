@@ -86,9 +86,9 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <Link href="/login">
-              <button className="px-4 py-2 text-white hover:text-blue-400 transition-colors font-medium">
+              <span className="px-4 py-2 text-white hover:text-blue-400 transition-colors font-medium cursor-pointer">
                 Sign In
-              </button>
+              </span>
             </Link>
           </div>
         </div>

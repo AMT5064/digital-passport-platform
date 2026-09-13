@@ -9,10 +9,13 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:seed": "node prisma/seed.js",
+    "db:seed": "ts-node prisma/seed.ts",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "generate": "prisma generate"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.0",
@@ -56,6 +59,7 @@
     "@types/uuid": "^9.0.0",
     "eslint": "^8.50.0",
     "eslint-config-next": "^15.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "ts-node": "^10.9.2"
   }
 }

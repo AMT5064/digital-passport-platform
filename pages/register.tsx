@@ -83,11 +83,9 @@ export default function Register() {
 
       <div className="w-full max-w-lg relative z-10">
         {/* Back Link */}
-        <Link href="/">
-          <a className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-8 font-medium">
-            <ArrowRight className="w-4 h-4 rotate-180" />
-            Back to home
-          </a>
+        <Link href="/" className="inline-flex items-center gap-2 text-gray-300 hover:text-white transition-colors mb-8 font-medium">
+          <ArrowRight className="w-4 h-4 rotate-180" />
+          Back to home
         </Link>
 
         {/* Card */}
@@ -324,102 +322,14 @@ export default function Register() {
           {/* Sign In Link */}
           <p className="text-center text-gray-400 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login">
-              <a className="text-emerald-400 hover:text-emerald-300 font-medium">Sign In</a>
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium">
+              Sign In
             </Link>
           </p>
 
           {/* Footer */}
           <p className="text-center text-gray-500 text-xs mt-6">
             By creating an account, you agree to our <a href="#" className="text-emerald-400 hover:text-emerald-300">Terms</a> and <a href="#" className="text-emerald-400 hover:text-emerald-300">Privacy Policy</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Mobile (Optional)</label>
-            <input
-              type="tel"
-              name="mobile"
-              value={formData.mobile}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Company (Optional)</label>
-            <input
-              type="text"
-              name="company"
-              value={formData.company}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Designation (Optional)</label>
-            <input
-              type="text"
-              name="designation"
-              value={formData.designation}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-semibold mb-2">Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50"
-          >
-            {loading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link href="/login" className="text-green-600 hover:underline font-semibold">
-              Sign in here
-            </Link>
           </p>
         </div>
       </div>
