@@ -10,7 +10,8 @@
       "Bash(git commit -m 'feat: Complete UI/UX redesign with premium design system *)",
       "Bash(npm run *)",
       "Bash(npx prisma *)",
-      "Bash(findstr env *)"
+      "Bash(findstr env *)",
+      "Bash(export DATABASE_URL='postgresql://dbuser:rbwAsMkh6VKUim08mkVicqyfMrvD1uiU@dpg-daj9t4oae00c7394l9mg-a.oregon-postgres.render.com/digital_passport_t2dr')"
     ]
   }
 }

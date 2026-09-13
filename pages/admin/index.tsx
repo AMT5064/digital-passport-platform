@@ -22,14 +22,36 @@ export default function AdminDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [stats, setStats] = useState({
+    totalEvents: 0,
+    totalZones: 0,
+    totalParticipants: 0,
+    totalScans: 0,
+    todaysScans: 0,
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
     } else if (session?.user && session.user.role === 'ATTENDEE') {
       router.push('/passport')
+    } else {
+      fetchStats()
     }
   }, [session, status, router])
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch('/api/dashboard-stats')
+      const data = await response.json()
+      setStats(data)
+    } catch (error) {
+      console.error('Error fetching stats:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (status === 'loading') {
     return (
@@ -129,29 +151,29 @@ export default function AdminDashboard() {
               <StatBox
                 icon={Calendar}
                 label="Active Events"
-                value="1"
-                trend="+0 this month"
+                value={stats.totalEvents}
+                trend={`${stats.totalEvents} total`}
                 color="from-blue-500 to-cyan-500"
               />
               <StatBox
                 icon={MapPin}
                 label="Total Zones"
-                value="4"
-                trend="Ready to use"
+                value={stats.totalZones}
+                trend={`${stats.totalZones} zones`}
                 color="from-emerald-500 to-teal-500"
               />
               <StatBox
                 icon={Users}
                 label="Participants"
-                value="0"
-                trend="Waiting to join"
+                value={stats.totalParticipants}
+                trend={`${stats.totalParticipants} attendees`}
                 color="from-purple-500 to-pink-500"
               />
               <StatBox
                 icon={Activity}
                 label="Total Scans"
-                value="0"
-                trend="No activity yet"
+                value={stats.totalScans}
+                trend={`${stats.todaysScans} today`}
                 color="from-orange-500 to-red-500"
               />
             </div>
