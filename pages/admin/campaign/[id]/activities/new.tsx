@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { ArrowLeft, Gamepad2, AlertCircle, Plus, X } from 'lucide-react'
 
+// Activity creation page with type-specific forms
 export default function CreateActivityPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
