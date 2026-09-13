@@ -11,6 +11,7 @@ import {
   Settings,
   Plus,
   Edit2,
+  Trash2,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -47,6 +48,38 @@ export default function CampaignDetailPage() {
   const [zones, setZones] = useState<any[]>([])
   const [activities, setActivities] = useState<any[]>([])
   const [participants, setParticipants] = useState<any[]>([])
+
+  const handleDeleteCampaign = async () => {
+    if (!confirm(`Delete campaign "${campaign?.name}"? This action cannot be undone.`)) return
+    try {
+      const res = await fetch(`/api/events-delete?id=${campaignId}`, { method: 'DELETE' })
+      if (res.ok) {
+        await logAuditAction('delete', 'campaign', campaignId as string, campaign?.name)
+        router.push('/admin')
+      }
+    } catch (error) {
+      console.error('Error deleting campaign:', error)
+    }
+  }
+
+  const logAuditAction = async (action: string, entityType: string, entityId: string, entityName?: string) => {
+    try {
+      await fetch('/api/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          entityType,
+          entityId,
+          entityName,
+          campaignId,
+          userId: (session as any)?.user?.email,
+        }),
+      })
+    } catch (error) {
+      console.error('Error logging action:', error)
+    }
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -134,11 +167,16 @@ export default function CampaignDetailPage() {
               <p className="text-xs text-gray-400">{campaign.venue}</p>
             </div>
           </div>
-          <Link href={`/admin/campaign/${campaignId}/settings`}>
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <Settings className="w-6 h-6" />
+          <div className="flex items-center gap-2">
+            <Link href={`/admin/campaign/${campaignId}/settings`}>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                <Settings className="w-6 h-6" />
+              </button>
+            </Link>
+            <button onClick={handleDeleteCampaign} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400 hover:text-red-300">
+              <Trash2 className="w-6 h-6" />
             </button>
-          </Link>
+          </div>
         </div>
       </header>
 
@@ -284,6 +322,40 @@ function QuickActionButton({ icon: Icon, label, href }: any) {
 }
 
 function ZonesTab({ campaignId, zones, onRefresh }: any) {
+  const { data: session } = useSession()
+
+  const handleDeleteZone = async (id: string, name?: string) => {
+    if (!confirm('Delete this zone? All activities linked to this zone will also be deleted. This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/zones-delete?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        logAuditAction('delete', 'zone', id, name)
+        onRefresh()
+      }
+    } catch (error) {
+      console.error('Error deleting zone:', error)
+    }
+  }
+
+  const logAuditAction = async (action: string, entityType: string, entityId: string, entityName?: string) => {
+    try {
+      await fetch('/api/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          entityType,
+          entityId,
+          entityName,
+          campaignId,
+          userId: (session as any)?.user?.email,
+        }),
+      })
+    } catch (error) {
+      console.error('Error logging action:', error)
+    }
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -307,10 +379,20 @@ function ZonesTab({ campaignId, zones, onRefresh }: any) {
             <div key={zone.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold">{zone.name}</h4>
-                <span className="text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded">{zone.points} pts</span>
+                <span className="text-xs bg-emerald-600 text-white px-2 py-1 rounded font-semibold">{zone.points} pts</span>
               </div>
               {zone.description && <p className="text-sm text-gray-400 mb-2">{zone.description}</p>}
-              <p className="text-xs text-gray-500">QR: {zone.qrSlug}</p>
+              <p className="text-xs text-gray-500 mb-3">QR: {zone.qrSlug}</p>
+              <div className="flex gap-2">
+                <button className="flex-1 flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 px-3 py-2 rounded text-sm transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                  Edit
+                </button>
+                <button onClick={() => handleDeleteZone(zone.id, zone.name)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -320,6 +402,53 @@ function ZonesTab({ campaignId, zones, onRefresh }: any) {
 }
 
 function ActivitiesTab({ campaignId, activities, zones, onRefresh }: any) {
+  const { data: session } = useSession()
+
+  const handleDeleteActivity = async (id: string, name?: string) => {
+    if (!confirm('Delete this activity? This action cannot be undone.')) return
+    try {
+      const res = await fetch(`/api/activities-delete?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        logAuditAction('delete', 'activity', id, name)
+        onRefresh()
+      }
+    } catch (error) {
+      console.error('Error deleting activity:', error)
+    }
+  }
+
+  const logAuditAction = async (action: string, entityType: string, entityId: string, entityName?: string) => {
+    try {
+      await fetch('/api/audit-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          entityType,
+          entityId,
+          entityName,
+          campaignId,
+          userId: (session as any)?.user?.email,
+        }),
+      })
+    } catch (error) {
+      console.error('Error logging action:', error)
+    }
+  }
+
+  const getActivityTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      QUIZ: 'bg-blue-600 text-white',
+      POLL: 'bg-purple-600 text-white',
+      SURVEY: 'bg-pink-600 text-white',
+      DOWNLOAD: 'bg-green-600 text-white',
+      VIDEO: 'bg-orange-600 text-white',
+      RAFFLE: 'bg-red-600 text-white',
+      CUSTOM_CTA: 'bg-cyan-600 text-white',
+    }
+    return colors[type] || 'bg-gray-600 text-white'
+  }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -343,9 +472,19 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh }: any) {
             <div key={activity.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
               <div className="flex justify-between items-start mb-2">
                 <h4 className="font-bold">{activity.zone?.name}</h4>
-                <span className="text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded">{activity.type}</span>
+                <span className={`text-xs px-2 py-1 rounded font-semibold ${getActivityTypeBadge(activity.type)}`}>{activity.type}</span>
               </div>
-              {activity.question && <p className="text-sm text-gray-300">{activity.question}</p>}
+              {activity.question && <p className="text-sm text-gray-300 mb-3">{activity.question}</p>}
+              <div className="flex gap-2">
+                <button className="flex-1 flex items-center justify-center gap-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 px-3 py-2 rounded text-sm transition-colors">
+                  <Edit2 className="w-4 h-4" />
+                  Edit
+                </button>
+                <button onClick={() => handleDeleteActivity(activity.id, activity.type)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>
