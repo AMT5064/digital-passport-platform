@@ -78,7 +78,7 @@ export default function AdminDashboard() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] via-[#7600FF] to-[#201751]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] to-[#16123D]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-300">Loading your dashboard...</p>
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
   if (!session?.user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] via-[#7600FF] to-[#201751] text-white font-poppins">
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
       {/* Header */}
       <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#201751]/50 to-[#16123D]/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -130,46 +130,19 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Main Content */}
-        <main className="space-y-8 animate-slide-in">
+        <main className="space-y-6 animate-slide-in">
             {/* Welcome Section */}
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#00CBB3]/10 to-[#7600FF]/10 rounded-2xl blur-2xl"></div>
-              <div className="relative bg-gradient-to-br from-[#16123D]/60 to-[#201751]/60 backdrop-blur border border-white/10 rounded-2xl p-8">
-                <h2 className="text-3xl font-oswald font-bold mb-2">Welcome back, {session.user.name}!</h2>
-                <p className="text-gray-300">Here&apos;s what&apos;s happening with your events today</p>
-              </div>
+            <div className="bg-gradient-to-br from-[#16123D]/60 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-2xl px-6 py-5">
+              <h2 className="text-2xl font-oswald font-bold mb-1">Welcome back, {session.user.name}!</h2>
+              <p className="text-gray-300 text-sm">Here&apos;s what&apos;s happening with your events today</p>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatBox
-                icon={Calendar}
-                label="Active Events"
-                value={stats.totalEvents}
-                trend={`${stats.totalEvents} total`}
-                color="from-[#00CBB3] to-[#00CBB3]"
-              />
-              <StatBox
-                icon={MapPin}
-                label="Total Zones"
-                value={stats.totalZones}
-                trend={`${stats.totalZones} zones`}
-                color="from-[#7600FF] to-[#7600FF]"
-              />
-              <StatBox
-                icon={Users}
-                label="Participants"
-                value={stats.totalParticipants}
-                trend={`${stats.totalParticipants} attendees`}
-                color="from-[#FFB800] to-[#FFB800]"
-              />
-              <StatBox
-                icon={Activity}
-                label="Total Scans"
-                value={stats.totalScans}
-                trend={`${stats.todaysScans} today`}
-                color="from-[#F96A32] to-[#F96A32]"
-              />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatBox icon={Calendar} label="Active Events" value={stats.totalEvents} color="#00CBB3" />
+              <StatBox icon={MapPin} label="Total Zones" value={stats.totalZones} color="#7600FF" />
+              <StatBox icon={Users} label="Participants" value={stats.totalParticipants} color="#FFB800" />
+              <StatBox icon={Activity} label="Total Scans" value={stats.totalScans} color="#F96A32" />
             </div>
 
             {/* Campaigns Section */}
@@ -200,46 +173,49 @@ export default function AdminDashboard() {
                   </Link>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                   {campaigns.map((campaign) => (
-                    <Link key={campaign.id} href={`/admin/campaign/${campaign.id}`}>
-                      <a className="group bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all cursor-pointer">
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex-1">
-                            <h4 className="text-lg font-bold group-hover:text-[#00CBB3] transition-colors mb-2">{campaign.name}</h4>
-                            {campaign.venue && <p className="text-sm text-gray-400 flex items-center gap-1"><MapPin className="w-3 h-3" /> {campaign.venue}</p>}
+                    <Link
+                      key={campaign.id}
+                      href={`/admin/campaign/${campaign.id}`}
+                      className="group block bg-gradient-to-br from-[#16123D]/80 to-[#201751]/60 backdrop-blur border border-white/10 rounded-xl p-5 hover:border-[#00CBB3]/40 hover:from-[#16123D] hover:to-[#201751]/80 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-lg bg-[#00CBB3]/15 border border-[#00CBB3]/30 flex items-center justify-center flex-shrink-0">
+                            <Calendar className="w-5 h-5 text-[#00CBB3]" />
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${
-                            campaign.status === 'LIVE' ? 'bg-[#00CBB3]/20 text-[#00CBB3]' :
-                            campaign.status === 'PUBLISHED' ? 'bg-[#7600FF]/20 text-[#B266FF]' :
-                            'bg-gray-500/20 text-gray-300'
-                          }`}>
-                            {campaign.status}
-                          </span>
-                        </div>
-
-                        {campaign.description && <p className="text-sm text-gray-300 mb-4 line-clamp-2">{campaign.description}</p>}
-
-                        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
-                          <div className="text-center">
-                            <p className="text-2xl font-bold">{campaign._count?.zones || 0}</p>
-                            <p className="text-xs text-gray-400">Zones</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-2xl font-bold">{campaign._count?.attendees || 0}</p>
-                            <p className="text-xs text-gray-400">Participants</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-2xl font-bold">{campaign._count?.scans || 0}</p>
-                            <p className="text-xs text-gray-400">Scans</p>
+                          <div className="min-w-0">
+                            <h4 className="font-bold group-hover:text-[#00CBB3] transition-colors truncate">{campaign.name}</h4>
+                            {campaign.venue && <p className="text-xs text-gray-400 flex items-center gap-1 truncate"><MapPin className="w-3 h-3 flex-shrink-0" /> {campaign.venue}</p>}
                           </div>
                         </div>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide flex-shrink-0 ${
+                          campaign.status === 'LIVE' ? 'bg-[#00CBB3]/20 text-[#00CBB3]' :
+                          campaign.status === 'PUBLISHED' ? 'bg-[#7600FF]/20 text-[#B266FF]' :
+                          'bg-[#FFB800]/20 text-[#FFB800]'
+                        }`}>
+                          {campaign.status}
+                        </span>
+                      </div>
 
-                        <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                          <span className="text-xs text-gray-500">Click to manage</span>
-                          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-[#00CBB3] transition-colors" />
+                      {campaign.description && <p className="text-sm text-gray-400 mb-3 line-clamp-2">{campaign.description}</p>}
+
+                      <div className="flex items-center gap-4 pt-3 border-t border-white/10">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-sm">{campaign._count?.zones || 0}</span>
+                          <span className="text-xs text-gray-500">Zones</span>
                         </div>
-                      </a>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-sm">{campaign._count?.attendees || 0}</span>
+                          <span className="text-xs text-gray-500">Participants</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-sm">{campaign._count?.scans || 0}</span>
+                          <span className="text-xs text-gray-500">Scans</span>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-[#00CBB3] group-hover:translate-x-0.5 transition-all ml-auto" />
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -255,23 +231,25 @@ function StatBox({
   icon: Icon,
   label,
   value,
-  trend,
   color,
 }: {
-  icon: React.ComponentType<{ className?: string }>
+  icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>
   label: string
   value: string | number
-  trend: string
   color: string
 }) {
   return (
-    <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 hover:border-white/20 transition-all group">
-      <div className={`w-12 h-12 bg-gradient-to-r ${color} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        <Icon className="w-6 h-6 text-[#16123D]" />
+    <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-4 hover:border-white/20 transition-all group flex items-center gap-3">
+      <div
+        className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform"
+        style={{ backgroundColor: `${color}25` }}
+      >
+        <Icon className="w-5 h-5" style={{ color }} />
       </div>
-      <p className="text-gray-400 text-sm mb-1">{label}</p>
-      <p className="text-3xl font-bold mb-2">{value}</p>
-      <p className="text-xs text-gray-500">{trend}</p>
+      <div className="min-w-0">
+        <p className="text-2xl font-bold leading-tight">{value}</p>
+        <p className="text-gray-400 text-xs truncate">{label}</p>
+      </div>
     </div>
   )
 }
