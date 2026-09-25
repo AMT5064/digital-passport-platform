@@ -50,7 +50,7 @@ export default async function handler(
         eventId, zoneId, type, title, description,
         question, answers, pollOptions, surveyQuestions,
         downloadUrl, downloadName, videoUrl, videoDuration,
-        raffleName, rafflePrize, ctaButtonText, ctaUrl,
+        raffleName, rafflePrize, ctaButtonText, ctaUrl, settings,
       } = req.body
 
       if (!eventId || !zoneId || !type || !title) {
@@ -76,6 +76,7 @@ export default async function handler(
           ...(rafflePrize !== undefined && { rafflePrize }),
           ...(ctaButtonText !== undefined && { ctaButtonText }),
           ...(ctaUrl !== undefined && { ctaUrl }),
+          ...(settings !== undefined && { settings }),
         },
       })
 
@@ -91,7 +92,7 @@ export default async function handler(
         id, zoneId, type, title, description,
         question, answers, pollOptions, surveyQuestions,
         downloadUrl, downloadName, videoUrl, videoDuration,
-        raffleName, rafflePrize, ctaButtonText, ctaUrl,
+        raffleName, rafflePrize, ctaButtonText, ctaUrl, settings,
       } = req.body
 
       if (!id) {
@@ -117,6 +118,7 @@ export default async function handler(
           ...(rafflePrize !== undefined && { rafflePrize }),
           ...(ctaButtonText !== undefined && { ctaButtonText }),
           ...(ctaUrl !== undefined && { ctaUrl }),
+          ...(settings !== undefined && { settings }),
         },
       })
 

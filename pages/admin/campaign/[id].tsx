@@ -400,6 +400,31 @@ function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
   )
 }
 
+function describeActivity(a: any): string {
+  const s = a.settings || {}
+  const count = (list: any) => (Array.isArray(list) ? list.length : 0)
+  switch (a.type) {
+    case 'QUIZ': {
+      const kind = s.quizType === 'MULTIPLE' ? 'Multiple correct' : s.quizType === 'TRUE_FALSE' ? 'True / False' : 'Single choice'
+      return `${kind} · ${count(a.answers)} answers${a.question ? ` · ${a.question}` : ''}`
+    }
+    case 'POLL':
+      return `${s.pollType === 'MULTIPLE' ? 'Multiple choice' : 'Single choice'} · ${count(a.pollOptions)} options${a.question ? ` · ${a.question}` : ''}`
+    case 'SURVEY':
+      return `${count(a.surveyQuestions)} ${count(a.surveyQuestions) === 1 ? 'question' : 'questions'}`
+    case 'RAFFLE':
+      return [a.raffleName, a.rafflePrize && `Prize: ${a.rafflePrize}`].filter(Boolean).join(' · ') || 'Raffle'
+    case 'DOWNLOAD':
+      return a.downloadName || a.downloadUrl || 'File download'
+    case 'VIDEO':
+      return a.videoUrl || 'Video'
+    case 'CUSTOM_CTA':
+      return a.ctaButtonText ? `Button: ${a.ctaButtonText}` : 'Custom link'
+    default:
+      return a.description || ''
+  }
+}
+
 function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActivity }: any) {
 
   const getActivityTypeBadge = (type: string) => {
@@ -443,7 +468,7 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
                 </div>
                 <span className={`text-xs px-2 py-1 rounded font-semibold flex-shrink-0 ${getActivityTypeBadge(activity.type)}`}>{activity.type}</span>
               </div>
-              {activity.description && <p className="text-sm text-gray-300 mb-3">{activity.description}</p>}
+              <p className="text-xs text-gray-400 mb-3">{describeActivity(activity)}</p>
               <div className="flex gap-2">
                 <Link href={`/admin/campaign/${campaignId}/activities/${activity.id}/edit`} className="flex-1">
                   <button className="w-full flex items-center justify-center gap-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] hover:text-[#C68CFF] px-3 py-2 rounded text-sm transition-colors">

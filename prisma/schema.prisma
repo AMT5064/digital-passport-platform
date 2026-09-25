@@ -134,6 +134,9 @@ model Activity {
   ctaButtonText   String?
   ctaUrl          String?
 
+  // Per-type options: quizType/explanation, pollType/showResults, winnersCount/drawDate
+  settings        Json?
+
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

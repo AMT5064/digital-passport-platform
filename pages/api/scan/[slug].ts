@@ -130,13 +130,65 @@ export default async function handler(
       }
     }
 
+    // The schema allows one scan per user per zone, so a repeat completion
+    // would otherwise fail with a database error.
+    const alreadyCompleted = await prisma.scan.findUnique({
+      where: {
+        userId_zoneId_eventId: { userId: user.id, zoneId: zone.id, eventId: zone.eventId },
+      },
+    })
+    if (alreadyCompleted) {
+      return res.status(409).json({ success: false, error: 'You have already completed this zone' })
+    }
+
+    const activity = zone.activities[0]
+    const settings = ((activity?.settings as any) || {}) as Record<string, any>
+    const toList = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : v ? [String(v)] : [])
+
+    // Enforce required answers on the server as well as in the browser
+    if (activity?.type === 'QUIZ' && toList(activityData?.quizAnswer).length === 0) {
+      return res.status(400).json({ success: false, error: 'Please select an answer' })
+    }
+    if (activity?.type === 'POLL' && toList(activityData?.pollAnswer).length === 0) {
+      return res.status(400).json({ success: false, error: 'Please select an option' })
+    }
+    if (activity?.type === 'SURVEY') {
+      const answers = (activityData?.surveyAnswers || {}) as Record<string, unknown>
+      const missing = ((activity.surveyQuestions as any[]) || []).some(
+        (q) => typeof q === 'object' && q.required !== false && toList(answers[q.id]).length === 0
+      )
+      if (missing) {
+        return res.status(400).json({ success: false, error: 'Please answer all required questions' })
+      }
+    }
+
+    // Grade the quiz: the selection must match the set of correct answers exactly.
+    // Wrong answers earn no points.
+    let isCorrect: boolean | null = null
+    let correctAnswerText: string | null = null
+    let pointsEarned = zone.points
+
+    if (activity?.type === 'QUIZ') {
+      const answers = (activity.answers as any[]) || []
+      const correct = answers.filter((a) => a.isCorrect)
+      const given = toList(activityData?.quizAnswer)
+      correctAnswerText = correct.map((a) => a.text).join(', ') || null
+      isCorrect =
+        correct.length > 0 &&
+        given.length === correct.length &&
+        correct.every((a) => given.includes(String(a.id)))
+      if (!isCorrect) {
+        pointsEarned = 0
+      }
+    }
+
     // Record the scan
     const scan = await prisma.scan.create({
       data: {
         userId: user.id,
         zoneId: zone.id,
         eventId: zone.eventId,
-        pointsEarned: zone.points,
+        pointsEarned,
         completedAt: completedAt ? new Date(completedAt) : new Date(),
         device: req.body.device || 'Unknown',
         browser: req.body.browser || 'Unknown',
@@ -146,15 +198,17 @@ export default async function handler(
     })
 
     // Award points
-    await prisma.pointsTransaction.create({
-      data: {
-        userId: user.id,
-        eventId: zone.eventId,
-        points: zone.points,
-        reason: `Scanned ${zone.name}`,
-        metadata: { zoneId: zone.id, scanId: scan.id },
-      },
-    })
+    if (pointsEarned > 0) {
+      await prisma.pointsTransaction.create({
+        data: {
+          userId: user.id,
+          eventId: zone.eventId,
+          points: pointsEarned,
+          reason: `Scanned ${zone.name}`,
+          metadata: { zoneId: zone.id, scanId: scan.id },
+        },
+      })
+    }
 
     // Log activity
     await prisma.activityLog.create({
@@ -202,6 +256,37 @@ export default async function handler(
       },
     })
 
+    // Poll results: tally every vote recorded for this zone's poll
+    let pollResults: { total: number; options: { id: string; text: string; count: number; percent: number }[] } | null = null
+    if (activity?.type === 'POLL' && settings.showResults !== false) {
+      const logs = await prisma.activityLog.findMany({
+        where: { zoneId: zone.id, eventId: zone.eventId, action: 'ZONE_SCANNED' },
+        select: { details: true },
+        take: 5000,
+      })
+      const counts: Record<string, number> = {}
+      let voters = 0
+      for (const log of logs) {
+        const data = (log.details as any)?.activityData
+        if (data?.type !== 'POLL') continue
+        const picks = toList(data.pollAnswer)
+        if (picks.length === 0) continue
+        voters++
+        picks.forEach((id) => {
+          counts[id] = (counts[id] || 0) + 1
+        })
+      }
+      pollResults = {
+        total: voters,
+        options: ((activity.pollOptions as any[]) || []).map((o) => ({
+          id: o.id,
+          text: o.text,
+          count: counts[o.id] || 0,
+          percent: voters ? Math.round(((counts[o.id] || 0) / voters) * 100) : 0,
+        })),
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -211,6 +296,10 @@ export default async function handler(
           completedAt: scan.completedAt,
         },
         totalPoints: totalPoints._sum.points || 0,
+        isCorrect,
+        correctAnswerText,
+        explanation: activity?.type === 'QUIZ' ? settings.explanation || null : null,
+        pollResults,
       },
     })
   } catch (error) {
