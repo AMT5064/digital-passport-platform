@@ -25,7 +25,7 @@ export default async function handler(
 
     const zone = await prisma.zone.findUnique({
       where: { qrSlug: slug },
-      include: { activities: true, event: true },
+      include: { activities: { orderBy: { createdAt: 'asc' } }, event: true },
     })
 
     if (!zone) {
