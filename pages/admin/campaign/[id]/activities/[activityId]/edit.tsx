@@ -21,7 +21,7 @@ export default function EditActivityPage() {
     if (!campaignId || !activityId) return
     fetch(`/api/zones?eventId=${campaignId}`)
       .then((r) => r.json())
-      .then(setZones)
+      .then((d) => setZones(Array.isArray(d) ? d : []))
       .catch((err) => console.error('Error fetching zones:', err))
     fetch(`/api/activities?id=${activityId}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Activity not found'))))

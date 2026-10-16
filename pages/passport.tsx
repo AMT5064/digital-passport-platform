@@ -55,7 +55,16 @@ export default function PassportPage() {
     )
   }
 
-  if (!dashboard) return null
+  if (!dashboard) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center px-4 text-white text-center">
+        <div>
+          <p className="mb-4">We couldn&apos;t load your passport right now.</p>
+          <button onClick={() => window.location.reload()} className="bg-[#00CBB3] text-[#16123D] px-6 py-2.5 rounded-lg font-semibold">Try again</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">

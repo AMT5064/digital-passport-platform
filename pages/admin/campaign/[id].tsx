@@ -137,18 +137,12 @@ export default function CampaignDetailPage() {
         fetch(`/api/participants?eventId=${campaignId}`),
       ])
 
-      const events = await eventsRes.json()
-      const event = events.find((e: any) => e.id === campaignId)
-      setCampaign(event || null)
-
-      const zonesData = await zonesRes.json()
-      setZones(zonesData)
-
-      const activitiesData = await activitiesRes.json()
-      setActivities(activitiesData)
-
-      const participantsData = await participantsRes.json()
-      setParticipants(participantsData)
+      const list = (d: any) => (Array.isArray(d) ? d : [])
+      const events = list(await eventsRes.json())
+      setCampaign(events.find((e: any) => e.id === campaignId) || null)
+      setZones(list(await zonesRes.json()))
+      setActivities(list(await activitiesRes.json()))
+      setParticipants(list(await participantsRes.json()))
     } catch (error) {
       console.error('Error fetching campaign data:', error)
     } finally {

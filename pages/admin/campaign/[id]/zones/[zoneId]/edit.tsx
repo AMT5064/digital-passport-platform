@@ -28,7 +28,7 @@ export default function EditZonePage() {
     try {
       const res = await fetch(`/api/zones?eventId=${campaignId}`)
       const zones = await res.json()
-      const zone = zones.find((z: any) => z.id === zoneId)
+      const zone = (Array.isArray(zones) ? zones : []).find((z: any) => z.id === zoneId)
       if (zone) {
         setFormData({
           name: zone.name || '',

@@ -19,7 +19,7 @@ export default function CreateActivityPage() {
     if (!campaignId) return
     fetch(`/api/zones?eventId=${campaignId}`)
       .then((r) => r.json())
-      .then(setZones)
+      .then((d) => setZones(Array.isArray(d) ? d : []))
       .catch((err) => console.error('Error fetching zones:', err))
   }, [campaignId])
 

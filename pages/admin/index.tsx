@@ -48,6 +48,7 @@ export default function AdminDashboard() {
     todaysScans: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -67,9 +68,11 @@ export default function AdminDashboard() {
       ])
       const statsData = await statsRes.json()
       const campaignsData = await campaignsRes.json()
-      setStats(statsData)
-      setCampaigns(campaignsData)
+      if (statsRes.ok) setStats(statsData)
+      setCampaigns(Array.isArray(campaignsData) ? campaignsData : [])
+      if (!campaignsRes.ok) setLoadError('Could not load your campaigns. Please try again shortly.')
     } catch (error) {
+      setLoadError('Could not load your campaigns. Please try again shortly.')
       console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
@@ -136,6 +139,10 @@ export default function AdminDashboard() {
               <h2 className="text-2xl font-oswald font-bold mb-1">Welcome back, {session.user.name}!</h2>
               <p className="text-gray-300 text-sm">Here&apos;s what&apos;s happening with your events today</p>
             </div>
+
+            {loadError && (
+              <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg text-sm">{loadError}</div>
+            )}
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
