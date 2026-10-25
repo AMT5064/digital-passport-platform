@@ -243,7 +243,7 @@ export default function CampaignDetailPage() {
           {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onDeleteActivity={handleDeleteActivity} onRefresh={fetchCampaignData} />}
           {activeTab === 'participants' && <ParticipantsTab participants={participants} />}
           {activeTab === 'leaderboard' && <LeaderboardTab participants={participants} />}
-          {activeTab === 'analytics' && <AnalyticsTab campaign={campaign} />}
+          {activeTab === 'analytics' && <AnalyticsTab zones={zones} participants={participants} />}
         </div>
       </div>
     </div>
@@ -585,27 +585,48 @@ function LeaderboardTab({ participants }: any) {
   )
 }
 
-function AnalyticsTab({ campaign }: any) {
+function AnalyticsTab({ zones, participants }: any) {
+  const scans = participants.flatMap((p: any) => p.scans || [])
+  const active = participants.filter((p: any) => (p.scans || []).length > 0).length
+  // Share of all possible booth visits that active participants actually made
+  const engagement = active && zones.length ? Math.round((scans.length / (active * zones.length)) * 100) : 0
+  const visitsByZone = zones
+    .map((z: any) => ({ name: z.name, visits: scans.filter((s: any) => s.zoneId === z.id).length }))
+    .sort((a: any, b: any) => b.visits - a.visits)
+  const maxVisits = Math.max(1, ...visitsByZone.map((z: any) => z.visits))
+
   return (
     <div>
       <h3 className="text-lg font-bold mb-6">Campaign Analytics</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnalyticsCard title="Total Scans" value="0" change="+0%" />
-        <AnalyticsCard title="Engagement Rate" value="0%" change="+0%" />
-        <AnalyticsCard title="Active Participants" value="0" change="+0%" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <AnalyticsCard title="Total Scans" value={scans.length} />
+        <AnalyticsCard title="Booth Coverage" value={`${engagement}%`} hint="of booths visited per active participant" />
+        <AnalyticsCard title="Active Participants" value={`${active} / ${participants.length}`} />
+      </div>
+      <h4 className="text-sm font-semibold text-gray-300 mb-3">Visits by booth</h4>
+      <div className="space-y-3">
+        {visitsByZone.map((z: any) => (
+          <div key={z.name}>
+            <div className="flex justify-between text-sm mb-1">
+              <span>{z.name}</span>
+              <span className="text-gray-400">{z.visits}</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-[#00CBB3] rounded-full" style={{ width: `${(z.visits / maxVisits) * 100}%` }} />
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-function AnalyticsCard({ title, value, change }: any) {
+function AnalyticsCard({ title, value, hint }: any) {
   return (
     <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-6">
       <p className="text-gray-400 text-sm mb-2">{title}</p>
-      <div className="flex items-baseline gap-2">
-        <p className="text-3xl font-bold">{value}</p>
-        <span className="text-green-400 text-sm">{change}</span>
-      </div>
+      <p className="text-3xl font-bold">{value}</p>
+      {hint && <p className="text-gray-500 text-xs mt-1">{hint}</p>}
     </div>
   )
 }

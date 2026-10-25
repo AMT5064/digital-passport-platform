@@ -32,9 +32,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let zonesTotal = 0
     let currentRank: number | null = null
+    let event: { id: string; name: string; description: string | null; venue: string | null; startDate: Date; endDate: Date } | null = null
 
     if (user.eventId) {
       zonesTotal = await prisma.zone.count({ where: { eventId: user.eventId } })
+      event = await prisma.event.findUnique({
+        where: { id: user.eventId },
+        select: { id: true, name: true, description: true, venue: true, startDate: true, endDate: true },
+      })
 
       const rankedUsers = await prisma.leaderboard.findMany({
         where: { eventId: user.eventId },
@@ -52,6 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       zonesCompleted,
       zonesTotal,
       badges: user.badges,
+      event,
     })
   } catch (error: any) {
     console.error('Passport stats error:', error)

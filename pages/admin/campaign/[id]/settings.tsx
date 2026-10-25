@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -16,13 +16,43 @@ export default function CampaignSettingsPage() {
     enableLeaderboard: true,
   })
 
+  const [error, setError] = useState('')
+
+  // Load what's saved so the form reflects the campaign's current settings
+  useEffect(() => {
+    if (!campaignId || status !== 'authenticated') return
+    fetch(`/api/event-settings?eventId=${campaignId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        if (s) {
+          setFormData({
+            scanMode: s.scanMode,
+            enableNotifications: s.enableNotifications,
+            enableLeaderboard: s.enableLeaderboard,
+          })
+        }
+      })
+      .catch((err) => console.error('Error loading settings:', err))
+  }, [campaignId, status])
+
   const handleSave = async () => {
     setLoading(true)
+    setError('')
     try {
+      const response = await fetch('/api/event-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: campaignId, ...formData }),
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to save settings')
+      }
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      console.error('Error saving settings:', error)
+    } catch (err: any) {
+      console.error('Error saving settings:', err)
+      setError(err.message || 'Failed to save settings')
     } finally {
       setLoading(false)
     }
@@ -55,6 +85,11 @@ export default function CampaignSettingsPage() {
       </header>
 
       <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {error && (
+          <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg">
+            <p className="text-red-300 text-sm font-medium">{error}</p>
+          </div>
+        )}
         {saved && (
           <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-3 animate-slide-in">
             <CheckCircle2 className="w-5 h-5 text-green-400 flex-shrink-0" />

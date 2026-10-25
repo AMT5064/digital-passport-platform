@@ -51,7 +51,7 @@ export default function LeaderboardPage() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center px-4">
         <div className="text-center animate-scale-in">
           <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4 opacity-50" />
-          <p className="text-gray-300 mb-6">No event selected</p>
+          <p className="text-gray-300 mb-6">Scan your first booth to join the event leaderboard</p>
           <button
             onClick={() => router.push('/passport')}
             className="btn btn-primary bg-gradient-to-r from-purple-600 to-purple-700"

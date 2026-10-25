@@ -85,3 +85,8 @@ export function getReadableDistance(date: Date): string {
 
   return formatDateShort(date)
 }
+
+// Only follow same-site paths, so a crafted link can't send people elsewhere after login
+export function safeCallbackUrl(value: unknown): string {
+  return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : ''
+}

@@ -1,4 +1,6 @@
+import type { NextApiRequest, NextApiResponse } from 'next'
 import { NextAuthOptions } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from './prisma'
@@ -125,4 +127,20 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
   },
   debug: process.env.NODE_ENV === 'development',
+}
+
+const ADMIN_ROLES = ['SUPER_ADMIN', 'EVENT_ADMIN']
+
+// For admin-only API routes: sends 401/403 and returns null unless an admin is signed in
+export async function requireAdmin(req: NextApiRequest, res: NextApiResponse) {
+  const session = await getServerSession(req, res, authOptions)
+  if (!session?.user) {
+    res.status(401).json({ error: 'Unauthorized' })
+    return null
+  }
+  if (!ADMIN_ROLES.includes(session.user.role)) {
+    res.status(403).json({ error: 'Forbidden' })
+    return null
+  }
+  return session
 }

@@ -12,6 +12,7 @@ interface DashboardData {
   zonesCompleted: number
   zonesTotal: number
   badges: any[]
+  event: { id: string; name: string } | null
 }
 
 export default function PassportPage() {
@@ -40,6 +41,7 @@ export default function PassportPage() {
             zonesCompleted: res.data.zonesCompleted,
             zonesTotal: res.data.zonesTotal,
             badges: res.data.badges,
+            event: res.data.event,
           })
         })
         .catch((err) => console.error('Failed to load passport stats:', err))
@@ -90,6 +92,7 @@ export default function PassportPage() {
         <div className="bg-gradient-to-br from-[#16123D]/60 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-2xl p-5">
           <h2 className="text-xl font-oswald font-bold mb-1 truncate">Welcome, {dashboard.user.name}!</h2>
           <p className="text-gray-400 text-sm truncate">{dashboard.user.email}</p>
+          {dashboard.event && <p className="text-[#00CBB3] text-xs mt-2 truncate">{dashboard.event.name}</p>}
         </div>
 
         {/* Stats Grid */}
@@ -114,7 +117,7 @@ export default function PassportPage() {
             title="View Leaderboard"
             description="See how you rank against others"
             color="#7600FF"
-            onClick={() => router.push('/leaderboard')}
+            onClick={() => router.push(dashboard.event ? `/leaderboard?eventId=${dashboard.event.id}` : '/leaderboard')}
           />
           <ActionCard
             icon={Info}

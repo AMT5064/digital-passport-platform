@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
+import { requireAdmin } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ApiResponse } from '@/types'
 
@@ -13,11 +12,8 @@ export default async function handler(
   }
 
   try {
-    const session = await getServerSession(req, res, authOptions)
-
-    if (!session?.user) {
-      return res.status(401).json({ success: false, error: 'Not authenticated' })
-    }
+    const session = await requireAdmin(req, res)
+    if (!session) return
 
     const { eventId } = req.query
 

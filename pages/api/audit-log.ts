@@ -1,7 +1,10 @@
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (!(await requireAdmin(req, res))) return
+
   try {
     if (req.method === 'POST') {
       const { action, entityType, entityId, entityName, campaignId, changes, userId } = req.body

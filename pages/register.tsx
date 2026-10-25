@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import axios from 'axios'
+import { signIn } from 'next-auth/react'
+import { safeCallbackUrl } from '@/lib/utils'
 import { UserPlus, Mail, Lock, User, Briefcase, Phone, AlertCircle, Eye, EyeOff, CheckCircle2, ArrowRight } from 'lucide-react'
 
 export default function Register() {
@@ -62,9 +64,20 @@ export default function Register() {
 
       if (response.data.success) {
         setSuccess(true)
-        setTimeout(() => {
-          router.push('/login?message=Account created! Please sign in.')
-        }, 1500)
+        // Sign straight in so a first-time attendee lands back on the booth they scanned
+        const callbackUrl = safeCallbackUrl(router.query.callbackUrl)
+        const login = await signIn('credentials', {
+          email: formData.email,
+          password: formData.password,
+          redirect: false,
+        })
+        if (login?.ok) {
+          router.push(callbackUrl || '/passport')
+        } else {
+          const params = new URLSearchParams({ message: 'Account created! Please sign in.' })
+          if (callbackUrl) params.set('callbackUrl', callbackUrl)
+          router.push(`/login?${params}`)
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.')
@@ -322,7 +335,10 @@ export default function Register() {
           {/* Sign In Link */}
           <p className="text-center text-gray-400 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-[#00CBB3] hover:text-[#00CBB3] font-medium">
+            <Link
+              href={safeCallbackUrl(router.query.callbackUrl) ? `/login?callbackUrl=${encodeURIComponent(safeCallbackUrl(router.query.callbackUrl))}` : '/login'}
+              className="text-[#00CBB3] hover:text-[#00CBB3] font-medium"
+            >
               Sign In
             </Link>
           </p>

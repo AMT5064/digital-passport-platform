@@ -37,6 +37,16 @@ export default async function handler(
 
     // If GET request, return zone and activity info
     if (req.method === 'GET') {
+      // Let a returning attendee see they've already done this booth before answering again
+      const previousScan = session?.user
+        ? await prisma.scan.findUnique({
+            where: {
+              userId_zoneId_eventId: { userId: session.user.id, zoneId: zone.id, eventId: zone.eventId },
+            },
+            select: { pointsEarned: true, completedAt: true },
+          })
+        : null
+
       return res.status(200).json({
         success: true,
         data: {
@@ -53,6 +63,7 @@ export default async function handler(
             name: zone.event.name,
             themeColor: zone.event.themeColor,
           },
+          completion: previousScan,
         },
       })
     }
@@ -245,6 +256,8 @@ export default async function handler(
       update: {
         points: totalPoints._sum.points || 0,
         zonesCompleted: scanCount,
+        // Each scan completes that zone's activity
+        activitiesCompleted: scanCount,
       },
       create: {
         eventId: zone.eventId,
@@ -252,7 +265,7 @@ export default async function handler(
         rank: 1,
         points: totalPoints._sum.points || 0,
         zonesCompleted: scanCount,
-        activitiesCompleted: 0,
+        activitiesCompleted: scanCount,
       },
     })
 

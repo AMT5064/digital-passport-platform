@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import { safeCallbackUrl } from '@/lib/utils'
 import { Lock, Mail, AlertCircle, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
 export default function Login() {
@@ -11,6 +12,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
+  const message = typeof router.query.message === 'string' ? router.query.message : ''
+  const callbackUrl = safeCallbackUrl(router.query.callbackUrl)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +30,7 @@ export default function Login() {
       if (result?.error) {
         setError('Invalid email or password. Please try again.')
       } else if (result?.ok) {
-        router.push('/passport')
+        router.push(callbackUrl || '/passport')
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -61,6 +64,12 @@ export default function Login() {
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-gray-400">Sign in to your account to continue</p>
           </div>
+
+          {message && !error && (
+            <div className="mb-6 p-4 bg-[#00CBB3]/15 border border-[#00CBB3]/50 rounded-lg">
+              <p className="text-[#00CBB3] text-sm">{message}</p>
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (
@@ -162,7 +171,7 @@ export default function Login() {
           </div>
 
           {/* Sign Up Link */}
-          <Link href="/register">
+          <Link href={callbackUrl ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}` : '/register'}>
             <button className="btn btn-outline w-full border-white/20 text-white hover:bg-white/10 font-semibold">
               Create an account
             </button>

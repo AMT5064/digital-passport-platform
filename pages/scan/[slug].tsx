@@ -9,6 +9,7 @@ interface ZoneData {
   zone: { id: string; name: string; description: string; image: string; points: number }
   activities: any[]
   event: { id: string; name: string; themeColor: string }
+  completion: { pointsEarned: number; completedAt: string } | null
 }
 
 interface SurveyQuestion {
@@ -139,15 +140,32 @@ export default function ScanPage() {
     multi ? (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]) : [id]
 
   if (status === 'unauthenticated') {
+    // Bring the attendee back to this booth after they sign in or register
+    const callbackUrl = encodeURIComponent(router.asPath)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] to-[#16123D] px-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-oswald font-bold mb-4 text-white">Sign In Required</h2>
+        <div className="bg-white/5 border border-white/10 backdrop-blur rounded-2xl p-8 text-center max-w-sm w-full">
+          {zoneData && (
+            <>
+              <p className="text-xs uppercase tracking-wide text-[#00CBB3] mb-1">{zoneData.event.name}</p>
+              <h2 className="text-2xl font-oswald font-bold mb-2 text-white">{zoneData.zone.name}</h2>
+              <p className="text-gray-300 text-sm mb-6">
+                Sign in to complete this booth and earn <strong className="text-[#FFB800]">{zoneData.zone.points} points</strong>.
+              </p>
+            </>
+          )}
+          {!zoneData && <h2 className="text-2xl font-oswald font-bold mb-6 text-white">Sign in to continue</h2>}
           <button
-            onClick={() => router.push('/login')}
-            className="bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-6 py-2.5 rounded-lg font-semibold transition-colors"
+            onClick={() => router.push(`/login?callbackUrl=${callbackUrl}`)}
+            className="w-full bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] py-3 rounded-lg font-semibold transition-colors mb-3"
           >
             Sign In
+          </button>
+          <button
+            onClick={() => router.push(`/register?callbackUrl=${callbackUrl}`)}
+            className="w-full border border-white/20 hover:bg-white/5 text-white py-3 rounded-lg font-semibold transition-colors"
+          >
+            First time here? Create an account
           </button>
         </div>
       </div>
@@ -179,6 +197,32 @@ export default function ScanPage() {
   }
 
   if (!zoneData) return null
+
+  if (zoneData.completion && !result) {
+    const earned = zoneData.completion.pointsEarned
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] to-[#16123D] px-4 py-8">
+        <div className="bg-white/5 border border-white/10 backdrop-blur rounded-2xl p-8 text-center max-w-sm w-full">
+          <CheckCircle2 className="w-14 h-14 text-[#00CBB3] mx-auto mb-4" />
+          <h2 className="text-2xl font-oswald font-bold mb-2 text-white">Already completed</h2>
+          <p className="text-gray-300 mb-4 text-sm">
+            You completed <strong>{zoneData.zone.name}</strong> on {new Date(zoneData.completion.completedAt).toLocaleString()}.
+          </p>
+          <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-6">
+            <p className={`text-2xl font-bold ${earned > 0 ? 'text-[#FFB800]' : 'text-gray-400'}`}>
+              {earned > 0 ? `+${earned} Points earned` : '0 Points earned'}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/passport')}
+            className="w-full bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] py-3 rounded-lg font-semibold transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (result) {
     const graded = result.isCorrect !== null
