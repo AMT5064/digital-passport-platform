@@ -54,3 +54,9 @@ Thumbs.db
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo

@@ -4,8 +4,20 @@ import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
+// Demo account passwords come from the environment so they never live in git
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`${name} must be set before seeding (see .env.example)`)
+  }
+  return value
+}
+
 async function main() {
   console.log('Starting seed...')
+
+  const adminPassword = await bcrypt.hash(requireEnv('SEED_ADMIN_PASSWORD'), 10)
+  const userPassword = await bcrypt.hash(requireEnv('SEED_USER_PASSWORD'), 10)
 
   // Create Super Admin
   const superAdmin = await prisma.admin.upsert({
@@ -15,7 +27,7 @@ async function main() {
       email: 'admin@digitialpassport.com',
       firstName: 'Super',
       lastName: 'Admin',
-      password: await bcrypt.hash('Admin@123', 10),
+      password: adminPassword,
       role: 'SUPER_ADMIN',
     },
   })
@@ -48,7 +60,7 @@ async function main() {
       email: 'admin@techsummit.com',
       firstName: 'Event',
       lastName: 'Manager',
-      password: await bcrypt.hash('Manager@123', 10),
+      password: adminPassword,
       role: 'EVENT_ADMIN',
       eventId: event.id,
     },
@@ -113,9 +125,11 @@ async function main() {
   // Create Activities
   await Promise.all([
     prisma.activity.upsert({
-      where: { zoneId: zones[0].id },
+      where: { id: 'activity-hall-a' },
       update: {},
       create: {
+        id: 'activity-hall-a',
+        title: 'Event Trivia',
         type: 'QUIZ',
         zoneId: zones[0].id,
         eventId: event.id,
@@ -129,9 +143,11 @@ async function main() {
       },
     }),
     prisma.activity.upsert({
-      where: { zoneId: zones[1].id },
+      where: { id: 'activity-hall-b' },
       update: {},
       create: {
+        id: 'activity-hall-b',
+        title: 'Interest Poll',
         type: 'POLL',
         zoneId: zones[1].id,
         eventId: event.id,
@@ -145,9 +161,11 @@ async function main() {
       },
     }),
     prisma.activity.upsert({
-      where: { zoneId: zones[2].id },
+      where: { id: 'activity-hall-c' },
       update: {},
       create: {
+        id: 'activity-hall-c',
+        title: 'Keynote Feedback',
         type: 'SURVEY',
         zoneId: zones[2].id,
         eventId: event.id,
@@ -168,9 +186,11 @@ async function main() {
       },
     }),
     prisma.activity.upsert({
-      where: { zoneId: zones[3].id },
+      where: { id: 'activity-networking' },
       update: {},
       create: {
+        id: 'activity-networking',
+        title: 'Networking Raffle',
         type: 'RAFFLE',
         zoneId: zones[3].id,
         eventId: event.id,
@@ -227,7 +247,7 @@ async function main() {
         email: 'john@example.com',
         firstName: 'John',
         lastName: 'Doe',
-        password: await bcrypt.hash('User@123', 10),
+        password: userPassword,
         mobile: '+1234567890',
         company: 'Tech Corp',
         designation: 'Software Engineer',
@@ -242,7 +262,7 @@ async function main() {
         email: 'jane@example.com',
         firstName: 'Jane',
         lastName: 'Smith',
-        password: await bcrypt.hash('User@123', 10),
+        password: userPassword,
         mobile: '+1987654321',
         company: 'Digital Solutions',
         designation: 'Product Manager',

@@ -209,7 +209,7 @@ docker-compose up -d
 
 # 4. Login with demo credentials
 # Email: john@example.com
-# Password: User@123
+# Password: value of SEED_USER_PASSWORD
 ```
 
 ### Local Development
@@ -232,15 +232,15 @@ npm run dev
 
 **Super Admin** (Platform management)
 - Email: admin@digitialpassport.com
-- Password: Admin@123
+- Password: value of SEED_ADMIN_PASSWORD
 
 **Event Admin** (Event management)
 - Email: admin@techsummit.com
-- Password: Manager@123
+- Password: value of SEED_ADMIN_PASSWORD
 
 **Sample Attendee** (Event participation)
 - Email: john@example.com
-- Password: User@123
+- Password: value of SEED_USER_PASSWORD
 
 ## Key Features Checklist
 

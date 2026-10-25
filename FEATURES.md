@@ -381,15 +381,15 @@ digital-passport/
 
 **Super Admin**
 - Email: admin@digitialpassport.com
-- Password: Admin@123
+- Password: value of SEED_ADMIN_PASSWORD
 
 **Event Admin**
 - Email: admin@techsummit.com
-- Password: Manager@123
+- Password: value of SEED_ADMIN_PASSWORD
 
 **Sample Attendee**
 - Email: john@example.com
-- Password: User@123
+- Password: value of SEED_USER_PASSWORD
 
 ## Deployment Options
 
