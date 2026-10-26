@@ -46,6 +46,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...base,
       totalPoints: me?.points || 0,
       currentRank: myIndex >= 0 ? myIndex + 1 : null,
+      tiedForLead: myIndex === 0 && !!players[1] && players[1].points === me?.points,
       players: players.length,
       zonesCompleted: me?.zonesCompleted || 0,
       zonesTotal: stats.zones.length,
@@ -67,7 +68,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         completed: !!me && z.id in me.zonePoints,
         pointsEarned: me?.zonePoints[z.id] ?? null,
       })),
-      nextTarget: above ? { rank: myIndex, name: above.name.split(' ')[0], pointsNeeded: above.points - (me?.points || 0) + 1 } : null,
+      nextTarget: above
+        ? {
+            rank: myIndex,
+            name: above.name.split(' ')[0],
+            pointsNeeded: above.points - (me?.points || 0) + 1,
+            // Same points, ranked below because they got there first
+            tied: above.points === (me?.points || 0),
+          }
+        : null,
     })
   } catch (error: any) {
     console.error('Passport stats error:', error)

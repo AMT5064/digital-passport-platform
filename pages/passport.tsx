@@ -15,7 +15,8 @@ interface DashboardData {
   event: { id: string; name: string; bannerImage: string | null; themeColor: string } | null
   zones: { id: string; name: string; points: number; activityType: string | null; completed: boolean; pointsEarned: number | null }[]
   players: number
-  nextTarget: { rank: number; name: string; pointsNeeded: number } | null
+  nextTarget: { rank: number; name: string; pointsNeeded: number; tied: boolean } | null
+  tiedForLead: boolean
 }
 
 export default function PassportPage() {
@@ -48,6 +49,7 @@ export default function PassportPage() {
             zones: res.data.zones || [],
             players: res.data.players || 0,
             nextTarget: res.data.nextTarget,
+            tiedForLead: !!res.data.tiedForLead,
           })
         })
         .catch((err) => console.error('Failed to load passport stats:', err))
@@ -231,8 +233,12 @@ function Journey({ dashboard }: { dashboard: DashboardData }) {
       ? 'Scan the QR code at any booth to get on the leaderboard.'
       : left.length === 0
         ? 'You completed every booth. Check the leaderboard to see where you finished!'
+        : dashboard.currentRank === 1 && dashboard.tiedForLead
+          ? `You're tied for the lead and got there first!${left.length ? ` ${left.length} more booth${left.length > 1 ? 's' : ''} would put you clear.` : ''}`
         : dashboard.currentRank === 1
           ? `You're leading! ${left.length} more booth${left.length > 1 ? 's' : ''} could add ${pointsLeft} pts to stay ahead.`
+          : dashboard.nextTarget?.tied
+            ? `You're tied with ${dashboard.nextTarget.name} on ${dashboard.totalPoints} pts, but they got there first. ${left.length ? 'One more booth puts you ahead!' : ''}`
           : dashboard.nextTarget && dashboard.nextTarget.pointsNeeded <= pointsLeft
             ? `${dashboard.nextTarget.pointsNeeded} pts to pass ${dashboard.nextTarget.name} and reach #${dashboard.nextTarget.rank}. Up to ${pointsLeft} pts still to collect.`
             : `Up to ${pointsLeft} pts still to collect at ${left.length} booth${left.length > 1 ? 's' : ''}. Every booth counts!`

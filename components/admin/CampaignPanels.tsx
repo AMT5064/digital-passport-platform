@@ -18,6 +18,8 @@ export interface CampaignStats {
     zonesCompleted: number
     zonePoints: Record<string, number>
     lastActivityAt: string | null
+    durationMinutes: number | null
+    tied: boolean
   }[]
   recent: { name: string; zoneName: string; points: number; at: string }[]
   registrationsByDay: { day: string; count: number }[]
@@ -177,7 +179,7 @@ export function LeaderboardPanel({ eventId, stats }: { eventId: string; stats: C
         <div>
           <h3 className="text-lg font-oswald font-bold">Leaderboard</h3>
           <p className="text-xs text-gray-400">
-            {players.length} playing{notStarted > 0 && ` · ${notStarted} registered but not started yet`}. Ties go to whoever got there first.
+            {players.length} playing{notStarted > 0 && ` · ${notStarted} registered but not started yet`}. Equal points: whoever reached the score first ranks higher, then whoever played fastest.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -203,6 +205,7 @@ export function LeaderboardPanel({ eventId, stats }: { eventId: string; stats: C
                   </th>
                 ))}
                 <th className="px-4 py-3 text-center">Booths</th>
+                <th className="px-4 py-3 text-center whitespace-nowrap">Reached at</th>
                 <th className="px-4 py-3 text-right">Points</th>
               </tr>
             </thead>
@@ -221,6 +224,10 @@ export function LeaderboardPanel({ eventId, stats }: { eventId: string; stats: C
                   ))}
                   <td className="px-4 py-3 text-center text-gray-300">
                     {p.zonesCompleted}/{stats.zones.length}
+                  </td>
+                  <td className="px-4 py-3 text-center text-xs text-gray-400 whitespace-nowrap" title={p.durationMinutes !== null ? `Played for ${p.durationMinutes} min` : undefined}>
+                    {p.lastActivityAt ? new Date(p.lastActivityAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '–'}
+                    {p.tied && <span className="block text-[10px] text-[#FFD36B]">tied · {p.durationMinutes} min</span>}
                   </td>
                   <td className="px-4 py-3 text-right font-bold text-[#FFB800]">{p.points}</td>
                 </tr>

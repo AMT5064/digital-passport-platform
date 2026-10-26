@@ -11,6 +11,8 @@ interface Player {
   zonesCompleted: number
   zonePoints: Record<string, number>
   finished: boolean
+  tied: boolean
+  reachedAt: string | null
 }
 
 interface Feed {
@@ -24,6 +26,8 @@ interface Feed {
 
 const REFRESH_MS = 10000
 const MEDALS = ['#FFD54A', '#C9D1DB', '#E8954A']
+
+const clock = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : '')
 
 const initials = (name: string) =>
   name
@@ -91,17 +95,36 @@ export default function LeaderboardScreen() {
   const zoneTotal = feed.zones.length
   const leader = board[0]
 
+  // Players level with the leader; the first of them got there first
+  const leaders = leader ? board.filter((p) => p.points === leader.points) : []
+
   // Encouragement lines, rotated through the shout-out panel and ticker
   const shoutouts: string[] = []
-  if (board[1] && leader) shoutouts.push(`${board[1].name} is ${leader.points - board[1].points + 1} pts away from the top spot!`)
-  if (board[2] && board[1]) shoutouts.push(`${board[2].name} needs ${board[1].points - board[2].points + 1} pts to move up to #2`)
+  if (leaders.length > 1) {
+    shoutouts.push(`${leaders.length} players tied for the lead at ${leader.points} pts. ${leader.name} got there first!`)
+    const chaser = board[leaders.length]
+    if (chaser) shoutouts.push(`${chaser.name} needs ${leader.points - chaser.points} pts to join the leaders`)
+  } else if (leader && board[1]) {
+    shoutouts.push(`${board[1].name} needs ${leader.points - board[1].points + 1} pts to take the top spot!`)
+    if (board[2]) {
+      shoutouts.push(
+        board[2].points === board[1].points
+          ? `${board[1].name} and ${board[2].name} are tied for #2`
+          : `${board[2].name} needs ${board[1].points - board[2].points + 1} pts to move up to #2`
+      )
+    }
+  }
   for (const p of feed.inProgress.slice(0, 4)) {
     shoutouts.push(`${p.name} has ${p.zonesLeft} booth${p.zonesLeft > 1 ? 's' : ''} to go. Keep going!`)
   }
   if (feed.totals.completedAll > 0) shoutouts.push(`${feed.totals.completedAll} player${feed.totals.completedAll > 1 ? 's have' : ' has'} completed every booth`)
 
   const ticker = [
-    ...(leader ? [`${leader.name.toUpperCase()} IS LEADING WITH ${leader.points.toLocaleString()} PTS`] : []),
+    ...(leaders.length > 1
+      ? [`${leaders.length} PLAYERS TIED FOR THE LEAD AT ${leader.points.toLocaleString()} PTS · ${leader.name.toUpperCase()} GOT THERE FIRST`]
+      : leader
+        ? [`${leader.name.toUpperCase()} IS LEADING WITH ${leader.points.toLocaleString()} PTS`]
+        : []),
     ...feed.recent.slice(0, 6).map((r) => `${r.name.toUpperCase()} JUST COMPLETED ${r.zoneName.toUpperCase()}${r.points ? ` +${r.points}` : ''}`),
     ...shoutouts.map((s) => s.toUpperCase()),
   ]
@@ -160,7 +183,9 @@ export default function LeaderboardScreen() {
                 <span className="w-6 text-lg font-bold text-center" style={{ color: p.rank <= 3 ? MEDALS[p.rank - 1] : '#9CA3AF' }}>{p.rank}</span>
                 <span className="flex-1 min-w-0">
                   <span className="block font-semibold truncate">{p.name}</span>
-                  <span className="block text-[11px] text-gray-500 truncate">{p.finished ? 'All booths done' : `${p.zonesCompleted}/${zoneTotal} booths`}</span>
+                  <span className="block text-[11px] text-gray-500 truncate">
+                    {p.tied ? `Tied · reached at ${clock(p.reachedAt)}` : p.finished ? 'All booths done' : `${p.zonesCompleted}/${zoneTotal} booths`}
+                  </span>
                 </span>
                 <span className="font-bold tabular-nums" style={{ color: p.rank <= 3 ? MEDALS[p.rank - 1] : 'white' }}>{p.points.toLocaleString()}</span>
               </li>
@@ -205,6 +230,7 @@ export default function LeaderboardScreen() {
                       </div>
                       <p className={`font-oswald font-bold truncate ${first ? 'text-2xl lg:text-3xl' : 'text-lg lg:text-xl'}`}>{p.name}</p>
                       {p.company && <p className="text-xs text-gray-400 truncate">{p.company}</p>}
+                      {p.tied && <p className="text-[11px] mt-1" style={{ color: MEDALS[i] }}>Tied · reached at {clock(p.reachedAt)}</p>}
                       <p className={`font-bold tabular-nums mt-2 ${first ? 'text-5xl lg:text-6xl' : 'text-3xl lg:text-4xl'}`} style={{ color: MEDALS[i] }}>
                         {p.points.toLocaleString()}
                       </p>

@@ -32,6 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         zonesCompleted: p.zonesCompleted,
         zonePoints: p.zonePoints,
         finished: zoneTotal > 0 && p.zonesCompleted >= zoneTotal,
+        tied: p.tied,
+        reachedAt: p.lastActivityAt,
       })),
       // People who have started but still have booths to go, for the encouragement panel
       inProgress: players

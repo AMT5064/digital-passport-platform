@@ -29,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       points: p.points,
       zonesCompleted: p.zonesCompleted,
       finished: zoneTotal > 0 && p.zonesCompleted >= zoneTotal,
+      tied: p.tied,
       isMe: p.userId === session?.user?.id,
     })
     const ranked = players.map(row)

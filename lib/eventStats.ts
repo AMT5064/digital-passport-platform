@@ -12,7 +12,12 @@ export interface RankedParticipant {
   points: number
   zonesCompleted: number
   zonePoints: Record<string, number>
+  // When they reached their current score: the main tie-breaker
   lastActivityAt: string | null
+  // Minutes from first to latest booth: the second tie-breaker
+  durationMinutes: number | null
+  // Someone else has exactly the same points
+  tied: boolean
   registeredAt: string
 }
 
@@ -81,11 +86,11 @@ export async function getEventStats(eventId: string): Promise<EventStats | null>
   const zoneName = new Map(event.zones.map((z) => [z.id, z.name]))
   const userById = new Map(users.map((u) => [u.id, u]))
 
-  const perUser = new Map<string, { points: number; zones: Set<string>; zonePoints: Record<string, number>; last: Date }>()
+  const perUser = new Map<string, { points: number; zones: Set<string>; zonePoints: Record<string, number>; first: Date; last: Date }>()
   const visits: Record<string, number> = {}
   for (const s of scans) {
     visits[s.zoneId] = (visits[s.zoneId] || 0) + 1
-    const entry = perUser.get(s.userId) || { points: 0, zones: new Set<string>(), zonePoints: {}, last: s.createdAt }
+    const entry = perUser.get(s.userId) || { points: 0, zones: new Set<string>(), zonePoints: {}, first: s.createdAt, last: s.createdAt }
     entry.points += s.pointsEarned
     entry.zones.add(s.zoneId)
     entry.zonePoints[s.zoneId] = (entry.zonePoints[s.zoneId] || 0) + s.pointsEarned
@@ -93,7 +98,8 @@ export async function getEventStats(eventId: string): Promise<EventStats | null>
     perUser.set(s.userId, entry)
   }
 
-  // Everyone registered appears; ties go to whoever got there first
+  // Everyone registered appears. Equal points: whoever reached that score first wins,
+  // then whoever played fastest (first booth to latest booth).
   const ranked = users
     .map((u) => {
       const e = perUser.get(u.id)
@@ -106,6 +112,7 @@ export async function getEventStats(eventId: string): Promise<EventStats | null>
         zonesCompleted: e?.zones.size || 0,
         zonePoints: e?.zonePoints || {},
         lastActivityAt: e ? e.last.toISOString() : null,
+        durationMinutes: e ? Math.round((e.last.getTime() - e.first.getTime()) / 60000) : null,
         registeredAt: u.createdAt.toISOString(),
       }
     })
@@ -114,9 +121,12 @@ export async function getEventStats(eventId: string): Promise<EventStats | null>
         b.points - a.points ||
         b.zonesCompleted - a.zonesCompleted ||
         (a.lastActivityAt || '9').localeCompare(b.lastActivityAt || '9') ||
+        (a.durationMinutes ?? Infinity) - (b.durationMinutes ?? Infinity) ||
         a.name.localeCompare(b.name)
     )
-    .map((p, i) => ({ ...p, rank: i + 1 }))
+  const pointCounts = new Map<number, number>()
+  for (const p of ranked) if (p.zonesCompleted > 0) pointCounts.set(p.points, (pointCounts.get(p.points) || 0) + 1)
+  const leaderboard = ranked.map((p, i) => ({ ...p, rank: i + 1, tied: p.zonesCompleted > 0 && (pointCounts.get(p.points) || 0) > 1 }))
 
   const zoneCount = event.zones.length
   const byDay: Record<string, number> = {}
@@ -154,13 +164,13 @@ export async function getEventStats(eventId: string): Promise<EventStats | null>
     })),
     totals: {
       registered: users.length,
-      started: ranked.filter((p) => p.zonesCompleted > 0).length,
-      completedAll: zoneCount ? ranked.filter((p) => p.zonesCompleted >= zoneCount).length : 0,
+      started: leaderboard.filter((p) => p.zonesCompleted > 0).length,
+      completedAll: zoneCount ? leaderboard.filter((p) => p.zonesCompleted >= zoneCount).length : 0,
       scans: scans.length,
       pointsAwarded: scans.reduce((sum, s) => sum + s.pointsEarned, 0),
       maxPoints: event.zones.reduce((sum, z) => sum + z.points, 0),
     },
-    leaderboard: ranked,
+    leaderboard,
     recent: scans
       .slice(-15)
       .reverse()

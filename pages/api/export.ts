@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let csv = ''
     if (type === 'leaderboard') {
       csv = toCsv(
-        ['Rank', 'Name', 'Email', 'Company', 'Points', 'Booths completed', ...stats.zones.map((z) => z.name), 'Last activity'],
+        ['Rank', 'Name', 'Email', 'Company', 'Points', 'Booths completed', ...stats.zones.map((z) => z.name), 'Reached score at', 'Minutes played', 'Tied on points'],
         stats.leaderboard.map((p) => [
           p.rank,
           p.name,
@@ -46,6 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           `${p.zonesCompleted}/${stats.zones.length}`,
           ...stats.zones.map((z) => (z.id in p.zonePoints ? p.zonePoints[z.id] : '')),
           p.lastActivityAt,
+          p.durationMinutes,
+          p.tied ? 'Yes' : '',
         ])
       )
     }

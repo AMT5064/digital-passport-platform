@@ -11,6 +11,7 @@ interface Row {
   points: number
   zonesCompleted: number
   finished: boolean
+  tied: boolean
   isMe: boolean
 }
 
@@ -114,9 +115,13 @@ export default function LeaderboardPage() {
             </div>
             <p className="text-sm text-gray-200 mt-3">
               {me.rank === 1
-                ? "You're in the lead! Keep visiting booths to stay there."
+                ? me.tied
+                  ? `You're tied for the lead, and you got there first!${me.finished ? '' : ' One more booth would put you clear.'}`
+                  : "You're in the lead! Keep visiting booths to stay there."
                 : above
-                  ? `${above.points - me.points} pts behind ${above.userName.split(' ')[0]} at #${me.rank - 1}.`
+                  ? above.points === me.points
+                    ? `Tied with ${above.userName.split(' ')[0]} on points, but they got there first.`
+                    : `${above.points - me.points} pts behind ${above.userName.split(' ')[0]} at #${me.rank - 1}.`
                   : 'Keep going!'}
               {!me.finished && ` ${board.zoneTotal - me.zonesCompleted} booth${board.zoneTotal - me.zonesCompleted > 1 ? 's' : ''} left to visit.`}
             </p>
@@ -178,7 +183,10 @@ function Rank({ r, color, zoneTotal }: { r: Row; color: string; zoneTotal: numbe
         <span className="block font-semibold truncate">
           {r.userName} {r.isMe && <span className="text-xs font-normal" style={{ color }}>(you)</span>}
         </span>
-        <span className="block text-xs text-gray-400">{r.finished ? 'All booths done 🎉' : `${r.zonesCompleted}/${zoneTotal} booths`}</span>
+        <span className="block text-xs text-gray-400">
+          {r.finished ? 'All booths done 🎉' : `${r.zonesCompleted}/${zoneTotal} booths`}
+          {r.tied && ' · tied on points'}
+        </span>
       </span>
       <span className="font-bold tabular-nums">{r.points}</span>
     </li>
