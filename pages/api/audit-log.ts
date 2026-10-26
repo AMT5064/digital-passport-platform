@@ -1,13 +1,15 @@
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, requireAdmin } from '@/lib/auth'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!(await requireAdmin(req, res))) return
+  const ctx = await requireAdmin(req, res)
+  if (!ctx) return
 
   try {
     if (req.method === 'POST') {
-      const { action, entityType, entityId, entityName, campaignId, changes, userId } = req.body
+      const { action, entityType, entityId, entityName, campaignId, changes } = req.body
+      if (campaignId && !ensureEventAccess(ctx, res, campaignId)) return
 
       const log = await prisma.auditLog.create({
         data: {
@@ -17,7 +19,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           entityName,
           campaignId,
           changes: changes || {},
-          userId: userId || 'system',
+          // Always the signed-in admin, never a value from the request
+          userId: ctx.user.id,
         },
       })
 
@@ -26,6 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'GET') {
       const { campaignId, entityType, limit = 50 } = req.query
+      if (campaignId ? !ensureEventAccess(ctx, res, campaignId as string) : !ctx.isSuper && !ensureEventAccess(ctx, res, null)) return
 
       const logs = await prisma.auditLog.findMany({
         where: {

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, requireAdmin } from '@/lib/auth'
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,11 +12,10 @@ export default async function handler(
   if (req.method === 'GET') {
     try {
       const { eventId } = req.query
+      if (eventId && !ensureEventAccess(session, res, eventId as string)) return
 
       const zones = await prisma.zone.findMany({
-        where: {
-          ...(eventId && { eventId: eventId as string }),
-        },
+        where: eventId ? { eventId: eventId as string } : session.isSuper ? {} : { eventId: { in: session.eventIds } },
         include: {
           activities: true,
           _count: {
@@ -39,6 +38,7 @@ export default async function handler(
       if (!eventId || !name || !qrSlug) {
         return res.status(400).json({ error: 'Missing required fields' })
       }
+      if (!ensureEventAccess(session, res, eventId)) return
 
       const zone = await prisma.zone.create({
         data: {
@@ -64,6 +64,8 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Zone ID required' })
       }
+      const existing = await prisma.zone.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
 
       const zone = await prisma.zone.update({
         where: { id },
@@ -88,6 +90,8 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Zone ID required' })
       }
+      const existing = await prisma.zone.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
 
       await prisma.zone.delete({
         where: { id },

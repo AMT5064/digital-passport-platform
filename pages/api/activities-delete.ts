@@ -1,13 +1,16 @@
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, requireAdmin } from '@/lib/auth'
 import { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!(await requireAdmin(req, res))) return
+  const ctx = await requireAdmin(req, res)
+  if (!ctx) return
 
   try {
     if (req.method === 'DELETE') {
       const { id } = req.query
+      const existing = await prisma.activity.findUnique({ where: { id: id as string }, select: { eventId: true } })
+      if (!ensureEventAccess(ctx, res, existing?.eventId)) return
 
       const activity = await prisma.activity.delete({
         where: { id: id as string },

@@ -285,9 +285,10 @@ export default function ScanPage() {
           </div>
           <button
             onClick={() => router.push('/passport')}
-            className="w-full bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] py-3 rounded-lg font-semibold transition-colors"
+            className="w-full py-3 rounded-lg font-semibold transition-all hover:brightness-110"
+            style={brandButton}
           >
-            Back to Dashboard
+            See what&apos;s next
           </button>
         </div>
       </div>

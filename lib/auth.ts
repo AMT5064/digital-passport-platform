@@ -61,6 +61,10 @@ export const authOptions: NextAuthOptions = {
           if (!isPasswordValid) {
             throw new Error('Invalid password')
           }
+          if (!admin.isActive) {
+            throw new Error('Account disabled')
+          }
+          await prisma.admin.update({ where: { id: admin.id }, data: { lastLoginAt: new Date() } })
 
           return {
             id: admin.id,
@@ -131,8 +135,17 @@ export const authOptions: NextAuthOptions = {
 
 const ADMIN_ROLES = ['SUPER_ADMIN', 'EVENT_ADMIN']
 
-// For admin-only API routes: sends 401/403 and returns null unless an admin is signed in
-export async function requireAdmin(req: NextApiRequest, res: NextApiResponse) {
+export interface AdminContext {
+  user: { id: string; role: string; email: string; name: string; image: string | null }
+  isSuper: boolean
+  // Events this admin may manage; ignored for super admins
+  eventIds: string[]
+  canAccess: (eventId: string | null | undefined) => boolean
+}
+
+// For admin-only API routes: sends 401/403 and returns null unless an active admin is signed in.
+// The admin row is read on every request so access changes and deactivation apply immediately.
+export async function requireAdmin(req: NextApiRequest, res: NextApiResponse): Promise<AdminContext | null> {
   const session = await getServerSession(req, res, authOptions)
   if (!session?.user) {
     res.status(401).json({ error: 'Unauthorized' })
@@ -142,5 +155,33 @@ export async function requireAdmin(req: NextApiRequest, res: NextApiResponse) {
     res.status(403).json({ error: 'Forbidden' })
     return null
   }
-  return session
+  const admin = await prisma.admin.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, eventAccess: true, isActive: true },
+  })
+  if (!admin || !admin.isActive) {
+    res.status(403).json({ error: 'Your admin access has been removed' })
+    return null
+  }
+  const isSuper = admin.role === 'SUPER_ADMIN'
+  return {
+    user: { ...session.user, role: admin.role },
+    isSuper,
+    eventIds: admin.eventAccess,
+    canAccess: (eventId) => isSuper || (!!eventId && admin.eventAccess.includes(eventId)),
+  }
+}
+
+// Sends 403 and returns false when the admin may not manage this event
+export function ensureEventAccess(ctx: AdminContext, res: NextApiResponse, eventId: string | null | undefined): boolean {
+  if (ctx.canAccess(eventId)) return true
+  res.status(403).json({ error: 'You do not have access to this event' })
+  return false
+}
+
+// Sends 403 and returns false unless this is a super admin
+export function ensureSuperAdmin(ctx: AdminContext, res: NextApiResponse): boolean {
+  if (ctx.isSuper) return true
+  res.status(403).json({ error: 'Only super admins can do this' })
+  return false
 }

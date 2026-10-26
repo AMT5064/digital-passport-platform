@@ -13,6 +13,9 @@ interface DashboardData {
   zonesTotal: number
   badges: any[]
   event: { id: string; name: string; bannerImage: string | null; themeColor: string } | null
+  zones: { id: string; name: string; points: number; activityType: string | null; completed: boolean; pointsEarned: number | null }[]
+  players: number
+  nextTarget: { rank: number; name: string; pointsNeeded: number } | null
 }
 
 export default function PassportPage() {
@@ -42,6 +45,9 @@ export default function PassportPage() {
             zonesTotal: res.data.zonesTotal,
             badges: res.data.badges,
             event: res.data.event,
+            zones: res.data.zones || [],
+            players: res.data.players || 0,
+            nextTarget: res.data.nextTarget,
           })
         })
         .catch((err) => console.error('Failed to load passport stats:', err))
@@ -108,10 +114,17 @@ export default function PassportPage() {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-3">
           <StatCard icon={Trophy} label="Total Points" value={dashboard.totalPoints} color="#FFB800" />
-          <StatCard icon={TrendingUp} label="Current Rank" value={dashboard.currentRank ? `#${dashboard.currentRank}` : '-'} color="#00CBB3" />
-          <StatCard icon={MapPin} label="Zones Completed" value={`${dashboard.zonesCompleted}/${dashboard.zonesTotal}`} color="#7600FF" />
+          <StatCard
+            icon={TrendingUp}
+            label={dashboard.currentRank ? `Rank of ${dashboard.players}` : 'Current Rank'}
+            value={dashboard.currentRank ? `#${dashboard.currentRank}` : '-'}
+            color="#00CBB3"
+          />
+          <StatCard icon={MapPin} label="Booths Completed" value={`${dashboard.zonesCompleted}/${dashboard.zonesTotal}`} color="#7600FF" />
           <StatCard icon={Award} label="Badges" value={dashboard.badges.length} color="#F96A32" />
         </div>
+
+        <Journey dashboard={dashboard} />
 
         {/* Actions */}
         <div className="space-y-3">
@@ -195,5 +208,63 @@ function ActionCard({
         <p className="text-gray-400 text-sm truncate">{description}</p>
       </div>
     </button>
+  )
+}
+
+// What the attendee has done, what's left, and how close they are to moving up
+function Journey({ dashboard }: { dashboard: DashboardData }) {
+  const color = dashboard.event?.themeColor || '#00CBB3'
+  if (!dashboard.event) {
+    return (
+      <div className="rounded-2xl p-5 border border-[#00CBB3]/40 bg-[#00CBB3]/10">
+        <p className="font-oswald font-bold text-lg">Start your passport</p>
+        <p className="text-sm text-gray-300 mt-1">Scan the QR code at any booth to join the event and earn your first points.</p>
+      </div>
+    )
+  }
+
+  const left = dashboard.zones.filter((z) => !z.completed)
+  const pointsLeft = left.reduce((sum, z) => sum + z.points, 0)
+  const progress = dashboard.zonesTotal ? Math.round((dashboard.zonesCompleted / dashboard.zonesTotal) * 100) : 0
+  const tip =
+    dashboard.zonesCompleted === 0
+      ? 'Scan the QR code at any booth to get on the leaderboard.'
+      : left.length === 0
+        ? 'You completed every booth. Check the leaderboard to see where you finished!'
+        : dashboard.currentRank === 1
+          ? `You're leading! ${left.length} more booth${left.length > 1 ? 's' : ''} could add ${pointsLeft} pts to stay ahead.`
+          : dashboard.nextTarget && dashboard.nextTarget.pointsNeeded <= pointsLeft
+            ? `${dashboard.nextTarget.pointsNeeded} pts to pass ${dashboard.nextTarget.name} and reach #${dashboard.nextTarget.rank}. Up to ${pointsLeft} pts still to collect.`
+            : `Up to ${pointsLeft} pts still to collect at ${left.length} booth${left.length > 1 ? 's' : ''}. Every booth counts!`
+
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+      <div>
+        <div className="flex justify-between items-baseline mb-2">
+          <h3 className="font-oswald font-bold text-lg">Your journey</h3>
+          <span className="text-sm font-semibold" style={{ color }}>{progress}%</span>
+        </div>
+        <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all" style={{ width: `${progress}%`, backgroundColor: color }} />
+        </div>
+        <p className="text-sm text-gray-300 mt-3">💡 {tip}</p>
+      </div>
+      <ul className="space-y-2">
+        {[...left, ...dashboard.zones.filter((z) => z.completed)].map((z) => (
+          <li key={z.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${z.completed ? 'border-white/5 bg-white/[0.02]' : 'border-white/10 bg-white/5'}`}>
+            <span
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${z.completed ? 'text-[#16123D]' : 'border border-white/30 text-transparent'}`}
+              style={z.completed ? { backgroundColor: color } : undefined}
+            >
+              ✓
+            </span>
+            <span className={`flex-1 min-w-0 text-sm truncate ${z.completed ? 'text-gray-400' : 'text-white'}`}>{z.name}</span>
+            <span className={`text-xs font-semibold whitespace-nowrap ${z.completed ? 'text-gray-400' : 'text-[#FFB800]'}`}>
+              {z.completed ? `+${z.pointsEarned ?? 0}` : `${z.points} pts`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

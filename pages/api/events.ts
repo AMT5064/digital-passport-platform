@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, ensureSuperAdmin, requireAdmin } from '@/lib/auth'
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,6 +12,7 @@ export default async function handler(
   if (req.method === 'GET') {
     try {
       const events = await prisma.event.findMany({
+        where: session.isSuper ? {} : { id: { in: session.eventIds } },
         include: {
           _count: {
             select: { attendees: true, zones: true, scans: true },
@@ -27,6 +28,7 @@ export default async function handler(
   }
 
   if (req.method === 'POST') {
+    if (!ensureSuperAdmin(session, res)) return
     try {
       const { name, description, startDate, endDate, venue, themeColor } = req.body
 
@@ -59,6 +61,7 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Event ID required' })
       }
+      if (!ensureEventAccess(session, res, id)) return
 
       const event = await prisma.event.update({
         where: { id },
@@ -83,6 +86,7 @@ export default async function handler(
   }
 
   if (req.method === 'DELETE') {
+    if (!ensureSuperAdmin(session, res)) return
     try {
       const { id } = req.body
 

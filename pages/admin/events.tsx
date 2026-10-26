@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import AdminHeader from '@/components/admin/AdminHeader'
 import {
   Calendar,
   MapPin,
@@ -47,6 +48,8 @@ export default function EventsPage() {
     themeColor: '#00CBB3',
   })
 
+  const isSuper = session?.user?.role === 'SUPER_ADMIN'
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login')
@@ -54,6 +57,11 @@ export default function EventsPage() {
       fetchEvents()
     }
   }, [status, router])
+
+  // The dashboard's "New event" button lands here with the form open
+  useEffect(() => {
+    if (router.query.new && isSuper) setShowForm(true)
+  }, [router.query.new, isSuper])
 
   const fetchEvents = async () => {
     try {
@@ -144,25 +152,17 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#201751] via-[#16123D] to-[#201751] text-white">
-      {/* Header */}
-      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#201751]/50 to-[#16123D]/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin">
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <ArrowLeft className="w-6 h-6" />
-              </button>
-            </Link>
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-[#00CBB3]" />
-              <div>
-                <h1 className="text-2xl font-bold">Events Management</h1>
-                <p className="text-xs text-gray-400">Create and manage your events</p>
-              </div>
+      <AdminHeader />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Calendar className="w-8 h-8 text-[#00CBB3]" />
+            <div>
+              <h1 className="text-2xl font-oswald font-bold">Events</h1>
+              <p className="text-xs text-gray-400">{isSuper ? 'Create and manage your events' : 'Events you have access to'}</p>
             </div>
           </div>
 
-          <button
+          {isSuper && <button
             onClick={() => {
               setShowForm(!showForm)
               setEditingId(null)
@@ -179,9 +179,8 @@ export default function EventsPage() {
           >
             <Plus className="w-5 h-5" />
             New Event
-          </button>
-        </div>
-      </header>
+          </button>}
+      </div>
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Create/Edit Form */}
@@ -361,6 +360,12 @@ export default function EventsPage() {
                 </div>
 
                 <div className="flex gap-2 pt-4 border-t border-white/10">
+                  <Link
+                    href={`/admin/campaign/${event.id}`}
+                    className="flex-1 bg-[#00CBB3]/20 hover:bg-[#00CBB3]/30 text-[#00CBB3] py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center"
+                  >
+                    Open
+                  </Link>
                   <button
                     onClick={() => handleEdit(event)}
                     className="flex-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
@@ -368,13 +373,15 @@ export default function EventsPage() {
                     <Edit2 className="w-4 h-4" />
                     Edit
                   </button>
-                  <button
-                    onClick={() => handleDelete(event.id)}
-                    className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
+                  {isSuper && (
+                    <button
+                      onClick={() => handleDelete(event.id)}
+                      className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 py-2 rounded-lg transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, requireAdmin } from '@/lib/auth'
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,10 +12,11 @@ export default async function handler(
   if (req.method === 'GET') {
     try {
       const { eventId, search } = req.query
+      if (eventId && !ensureEventAccess(session, res, eventId as string)) return
 
       const users = await prisma.user.findMany({
         where: {
-          ...(eventId && { eventId: eventId as string }),
+          ...(eventId ? { eventId: eventId as string } : !session.isSuper && { eventId: { in: session.eventIds } }),
           ...(search && {
             OR: [
               { email: { contains: search as string, mode: 'insensitive' } },
@@ -33,7 +34,7 @@ export default async function handler(
           },
         },
         orderBy: { createdAt: 'desc' },
-        take: 100,
+        take: eventId ? 5000 : 200,
       })
 
       return res.status(200).json(users)
@@ -49,6 +50,8 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'User ID required' })
       }
+      const existing = await prisma.user.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
 
       const user = await prisma.user.update({
         where: { id },
@@ -74,6 +77,8 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'User ID required' })
       }
+      const existing = await prisma.user.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
 
       await prisma.user.delete({
         where: { id },

@@ -43,6 +43,10 @@ model Admin {
   lastName      String
   password      String
   role          AdminRole   @default(EVENT_ADMIN)
+  // Events an EVENT_ADMIN may manage; SUPER_ADMIN manages everything
+  eventAccess   String[]    @default([])
+  isActive      Boolean     @default(true)
+  lastLoginAt   DateTime?
   eventId       String?
   event         Event?      @relation("EventAdmins", fields: [eventId], references: [id], onDelete: SetNull)
   createdAt     DateTime    @default(now())

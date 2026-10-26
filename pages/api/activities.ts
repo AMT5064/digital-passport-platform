@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
+import { ensureEventAccess, requireAdmin } from '@/lib/auth'
 
 export default async function handler(
   req: NextApiRequest,
@@ -21,13 +21,13 @@ export default async function handler(
         if (!activity) {
           return res.status(404).json({ error: 'Activity not found' })
         }
+        if (!ensureEventAccess(session, res, activity.eventId)) return
         return res.status(200).json(activity)
       }
 
+      if (eventId && !ensureEventAccess(session, res, eventId as string)) return
       const activities = await prisma.activity.findMany({
-        where: {
-          ...(eventId && { eventId: eventId as string }),
-        },
+        where: eventId ? { eventId: eventId as string } : session.isSuper ? {} : { eventId: { in: session.eventIds } },
         include: {
           zone: true,
         },
@@ -51,6 +51,12 @@ export default async function handler(
 
       if (!eventId || !zoneId || !type || !title) {
         return res.status(400).json({ error: 'Zone, type, and title are required' })
+      }
+      if (!ensureEventAccess(session, res, eventId)) return
+      // The zone must belong to the same event
+      const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true } })
+      if (zone?.eventId !== eventId) {
+        return res.status(400).json({ error: 'That zone is not part of this event' })
       }
 
       const activity = await prisma.activity.create({
@@ -94,6 +100,14 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Activity ID required' })
       }
+      const existing = await prisma.activity.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
+      if (zoneId) {
+        const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true } })
+        if (zone?.eventId !== existing?.eventId) {
+          return res.status(400).json({ error: 'That zone is not part of this event' })
+        }
+      }
 
       const activity = await prisma.activity.update({
         where: { id },
@@ -131,6 +145,8 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Activity ID required' })
       }
+      const existing = await prisma.activity.findUnique({ where: { id }, select: { eventId: true } })
+      if (!ensureEventAccess(session, res, existing?.eventId)) return
 
       await prisma.activity.delete({
         where: { id },

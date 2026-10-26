@@ -15,8 +15,11 @@ import {
   Trash2,
   Trophy,
   QrCode,
+  Monitor,
 } from 'lucide-react'
 import Link from 'next/link'
+import AdminHeader from '@/components/admin/AdminHeader'
+import { AnalyticsPanel, CampaignStats, ExportButtons, LeaderboardPanel, SetupChecklist, StatTiles } from '@/components/admin/CampaignPanels'
 
 interface Campaign {
   id: string
@@ -51,6 +54,8 @@ export default function CampaignDetailPage() {
   const [zones, setZones] = useState<any[]>([])
   const [activities, setActivities] = useState<any[]>([])
   const [participants, setParticipants] = useState<any[]>([])
+  const [stats, setStats] = useState<CampaignStats | null>(null)
+  const isSuper = session?.user?.role === 'SUPER_ADMIN'
 
   const handleDeleteCampaign = async () => {
     if (!confirm(`Delete campaign "${campaign?.name}"? This action cannot be undone.`)) return
@@ -131,11 +136,12 @@ export default function CampaignDetailPage() {
 
   const fetchCampaignData = async () => {
     try {
-      const [eventsRes, zonesRes, activitiesRes, participantsRes] = await Promise.all([
+      const [eventsRes, zonesRes, activitiesRes, participantsRes, statsRes] = await Promise.all([
         fetch('/api/events'),
         fetch(`/api/zones?eventId=${campaignId}`),
         fetch(`/api/activities?eventId=${campaignId}`),
         fetch(`/api/participants?eventId=${campaignId}`),
+        fetch(`/api/stats/event?eventId=${campaignId}`),
       ])
 
       const list = (d: any) => (Array.isArray(d) ? d : [])
@@ -144,6 +150,7 @@ export default function CampaignDetailPage() {
       setZones(list(await zonesRes.json()))
       setActivities(list(await activitiesRes.json()))
       setParticipants(list(await participantsRes.json()))
+      setStats(statsRes.ok ? await statsRes.json() : null)
     } catch (error) {
       console.error('Error fetching campaign data:', error)
     } finally {
@@ -176,21 +183,30 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
-      {/* Header */}
-      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/admin">
+      <AdminHeader />
+      <div className="border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-4 min-w-0">
+            <Link href="/admin" aria-label="Back to dashboard">
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                 <ArrowLeft className="w-6 h-6" />
               </button>
             </Link>
-            <div className="flex-1">
-              <h1 className="text-2xl font-oswald font-bold">{campaign.name}</h1>
-              <p className="text-xs text-gray-400">{campaign.venue}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl font-oswald font-bold truncate">{campaign.name}</h1>
+              <p className="text-xs text-gray-400 truncate">{campaign.venue}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <a
+              href={`/screen/${campaignId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#00CBB3] text-[#16123D] text-sm font-semibold"
+            >
+              <Monitor className="w-5 h-5" />
+              <span>Big screen</span>
+            </a>
             <Link
               href={`/admin/campaign/${campaignId}/branding`}
               className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold"
@@ -203,21 +219,22 @@ export default function CampaignDetailPage() {
                 <Settings className="w-6 h-6" />
               </button>
             </Link>
-            <button onClick={handleDeleteCampaign} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400 hover:text-red-300">
-              <Trash2 className="w-6 h-6" />
-            </button>
+            {isSuper && (
+              <button onClick={handleDeleteCampaign} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400 hover:text-red-300" aria-label="Delete event">
+                <Trash2 className="w-6 h-6" />
+              </button>
+            )}
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard icon={MapPin} label="Zones" value={campaign._count?.zones || 0} />
-          <StatCard icon={Gamepad2} label="Activities" value={activities.length} />
-          <StatCard icon={Users} label="Participants" value={campaign._count?.attendees || 0} />
-          <StatCard icon={BarChart3} label="Total Scans" value={campaign._count?.scans || 0} />
-        </div>
+        {stats && (
+          <div className="mb-8">
+            <StatTiles stats={stats} />
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-white/10 pb-0 overflow-x-auto">
@@ -246,110 +263,15 @@ export default function CampaignDetailPage() {
 
         {/* Tab Content */}
         <div>
-          {activeTab === 'overview' && <OverviewTab campaign={campaign} zones={zones} activities={activities} participants={participants} />}
+          {activeTab === 'overview' && stats && <SetupChecklist eventId={campaignId as string} stats={stats} />}
           {activeTab === 'zones' && <ZonesTab campaignId={campaignId as string} zones={zones} onDeleteZone={handleDeleteZone} onRefresh={fetchCampaignData} />}
           {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onDeleteActivity={handleDeleteActivity} onRefresh={fetchCampaignData} />}
-          {activeTab === 'participants' && <ParticipantsTab participants={participants} />}
-          {activeTab === 'leaderboard' && <LeaderboardTab participants={participants} />}
-          {activeTab === 'analytics' && <AnalyticsTab zones={zones} participants={participants} />}
+          {activeTab === 'participants' && <ParticipantsTab participants={participants} eventId={campaignId as string} />}
+          {activeTab === 'leaderboard' && stats && <LeaderboardPanel eventId={campaignId as string} stats={stats} />}
+          {activeTab === 'analytics' && stats && <AnalyticsPanel eventId={campaignId as string} stats={stats} />}
         </div>
       </div>
     </div>
-  )
-}
-
-function StatCard({ icon: Icon, label, value }: any) {
-  return (
-    <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-400 text-sm mb-1">{label}</p>
-          <p className="text-3xl font-bold">{value}</p>
-        </div>
-        <div className="w-12 h-12 bg-[#00CBB3]/20 rounded-lg flex items-center justify-center">
-          <Icon className="w-6 h-6 text-[#00CBB3]" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function OverviewTab({ campaign, zones, activities, participants }: any) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-bold mb-4">Campaign Details</h3>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Start Date</p>
-                <p className="font-semibold">{new Date(campaign.startDate).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-sm mb-1">End Date</p>
-                <p className="font-semibold">{new Date(campaign.endDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-            {campaign.description && (
-              <div>
-                <p className="text-gray-400 text-sm mb-2">Description</p>
-                <p className="text-gray-300">{campaign.description}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-gray-400 text-sm mb-2">Status</p>
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                campaign.status === 'LIVE' ? 'bg-[#00CBB3]/20 text-[#00CBB3]' :
-                campaign.status === 'PUBLISHED' ? 'bg-[#7600FF]/20 text-[#B266FF]' :
-                'bg-gray-500/20 text-gray-300'
-              }`}>
-                {campaign.status}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-bold mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <QuickActionButton icon={MapPin} label="Add Zone" href={`/admin/campaign/${campaign.id}/zones`} />
-            <QuickActionButton icon={Gamepad2} label="Add Activity" href={`/admin/campaign/${campaign.id}/activities`} />
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6">
-          <h3 className="text-lg font-bold mb-4">Campaign Stats</h3>
-          <div className="space-y-3">
-            <StatItem label="Total Zones" value={zones.length} />
-            <StatItem label="Total Activities" value={activities.length} />
-            <StatItem label="Total Participants" value={participants.length} />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StatItem({ label, value }: any) {
-  return (
-    <div className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-      <p className="text-gray-400 text-sm">{label}</p>
-      <p className="text-lg font-bold">{value}</p>
-    </div>
-  )
-}
-
-function QuickActionButton({ icon: Icon, label, href }: any) {
-  return (
-    <Link href={href}>
-      <button className="w-full flex items-center justify-center gap-2 bg-[#00CBB3]/20 hover:bg-[#00CBB3]/30 border border-[#00CBB3]/30 hover:border-[#00CBB3]/50 text-[#00CBB3] rounded-lg px-4 py-3 transition-all font-medium text-sm">
-        <Icon className="w-4 h-4" />
-        {label}
-      </button>
-    </Link>
   )
 }
 
@@ -491,13 +413,16 @@ function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActiv
   )
 }
 
-function ParticipantsTab({ participants }: any) {
+function ParticipantsTab({ participants, eventId }: any) {
   const totalPoints = participants.reduce((sum: number, p: any) => sum + p.scans.reduce((s: number, scan: any) => s + scan.pointsEarned, 0), 0)
 
   return (
     <div>
       <div className="mb-6">
-        <h3 className="text-lg font-bold mb-4">Participants ({participants.length})</h3>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <h3 className="text-lg font-bold">Participants ({participants.length})</h3>
+          <ExportButtons eventId={eventId} types={[{ type: 'participants', label: 'Export with registration answers' }]} />
+        </div>
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
             <p className="text-gray-400 text-sm mb-2">Total Participants</p>
@@ -546,95 +471,6 @@ function ParticipantsTab({ participants }: any) {
           </table>
         </div>
       )}
-    </div>
-  )
-}
-
-function LeaderboardTab({ participants }: any) {
-  const ranked = [...participants]
-    .map((p: any) => ({
-      ...p,
-      points: p.scans.reduce((s: number, scan: any) => s + scan.pointsEarned, 0),
-    }))
-    .sort((a: any, b: any) => b.points - a.points)
-
-  const medalColor = (rank: number) => {
-    if (rank === 0) return 'text-[#FFB800]'
-    if (rank === 1) return 'text-[#C0C0C0]'
-    if (rank === 2) return 'text-[#CD7F32]'
-    return 'text-gray-500'
-  }
-
-  return (
-    <div>
-      <h3 className="text-lg font-oswald font-bold mb-6">Leaderboard</h3>
-      {ranked.length === 0 ? (
-        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
-          <Trophy className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
-          <p className="text-gray-400">No rankings yet. Rankings appear once participants start scanning zones.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {ranked.map((p: any, idx: number) => (
-            <div key={p.id} className={`flex items-center gap-4 p-4 rounded-xl border ${idx < 3 ? 'bg-gradient-to-r from-[#00CBB3]/10 to-[#7600FF]/10 border-[#00CBB3]/30' : 'bg-white/5 border-white/10'}`}>
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-oswald font-bold text-lg ${medalColor(idx)} ${idx < 3 ? 'bg-white/10' : ''}`}>
-                {idx < 3 ? <Trophy className="w-5 h-5" /> : idx + 1}
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold">{p.firstName} {p.lastName}</p>
-                <p className="text-xs text-gray-400">{p.scans.length} zones scanned</p>
-              </div>
-              <p className="text-xl font-oswald font-bold text-[#FFB800]">{p.points} pts</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function AnalyticsTab({ zones, participants }: any) {
-  const scans = participants.flatMap((p: any) => p.scans || [])
-  const active = participants.filter((p: any) => (p.scans || []).length > 0).length
-  // Share of all possible booth visits that active participants actually made
-  const engagement = active && zones.length ? Math.round((scans.length / (active * zones.length)) * 100) : 0
-  const visitsByZone = zones
-    .map((z: any) => ({ name: z.name, visits: scans.filter((s: any) => s.zoneId === z.id).length }))
-    .sort((a: any, b: any) => b.visits - a.visits)
-  const maxVisits = Math.max(1, ...visitsByZone.map((z: any) => z.visits))
-
-  return (
-    <div>
-      <h3 className="text-lg font-bold mb-6">Campaign Analytics</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <AnalyticsCard title="Total Scans" value={scans.length} />
-        <AnalyticsCard title="Booth Coverage" value={`${engagement}%`} hint="of booths visited per active participant" />
-        <AnalyticsCard title="Active Participants" value={`${active} / ${participants.length}`} />
-      </div>
-      <h4 className="text-sm font-semibold text-gray-300 mb-3">Visits by booth</h4>
-      <div className="space-y-3">
-        {visitsByZone.map((z: any) => (
-          <div key={z.name}>
-            <div className="flex justify-between text-sm mb-1">
-              <span>{z.name}</span>
-              <span className="text-gray-400">{z.visits}</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-[#00CBB3] rounded-full" style={{ width: `${(z.visits / maxVisits) * 100}%` }} />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function AnalyticsCard({ title, value, hint }: any) {
-  return (
-    <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-6">
-      <p className="text-gray-400 text-sm mb-2">{title}</p>
-      <p className="text-3xl font-bold">{value}</p>
-      {hint && <p className="text-gray-500 text-xs mt-1">{hint}</p>}
     </div>
   )
 }
