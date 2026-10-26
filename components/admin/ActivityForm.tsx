@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { Plus, X, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react'
+import { Plus, X, AlertCircle, ChevronUp, ChevronDown, HelpCircle, BarChart3, ClipboardList, Gift, Download, PlayCircle, MousePointerClick, CheckCircle2 } from 'lucide-react'
+import FileUpload from './FileUpload'
 
 export type ActivityType = 'QUIZ' | 'POLL' | 'SURVEY' | 'RAFFLE' | 'DOWNLOAD' | 'VIDEO' | 'CUSTOM_CTA'
 export type QuizType = 'SINGLE' | 'MULTIPLE' | 'TRUE_FALSE'
@@ -45,6 +46,8 @@ interface FormState {
   surveyQuestions: SurveyQuestion[]
   downloadName: string
   downloadUrl: string
+  downloadSource: 'UPLOAD' | 'LINK'
+  downloadSize: number
   videoUrl: string
   videoDuration: string
   raffleName: string
@@ -57,14 +60,14 @@ interface FormState {
 
 const uid = () => Math.random().toString(36).slice(2, 9)
 
-const ACTIVITY_TYPES: { value: ActivityType; label: string; hint: string }[] = [
-  { value: 'QUIZ', label: 'Quiz', hint: 'A graded question. Correct answers earn points, wrong answers earn none.' },
-  { value: 'POLL', label: 'Poll', hint: 'An opinion question with no right or wrong answer. Everyone who votes earns points.' },
-  { value: 'SURVEY', label: 'Survey', hint: 'Several questions of different kinds: choice, rating, scale, text and more.' },
-  { value: 'RAFFLE', label: 'Raffle', hint: 'Attendees enter a prize draw when they complete this activity.' },
-  { value: 'DOWNLOAD', label: 'Download', hint: 'Give attendees a file such as a brochure or a deck.' },
-  { value: 'VIDEO', label: 'Video', hint: 'Show a YouTube, Vimeo or direct video.' },
-  { value: 'CUSTOM_CTA', label: 'Custom CTA', hint: 'A button that sends attendees to any link.' },
+const ACTIVITY_TYPES: { value: ActivityType; label: string; hint: string; icon: React.ElementType }[] = [
+  { value: 'QUIZ', label: 'Quiz', icon: HelpCircle, hint: 'A graded question. Correct answers earn points, wrong answers earn none.' },
+  { value: 'POLL', label: 'Poll', icon: BarChart3, hint: 'An opinion question with no right or wrong answer. Everyone who votes earns points.' },
+  { value: 'SURVEY', label: 'Survey', icon: ClipboardList, hint: 'Several questions: choice, rating, scale, text and more.' },
+  { value: 'RAFFLE', label: 'Raffle', icon: Gift, hint: 'Attendees enter a prize draw when they complete it.' },
+  { value: 'DOWNLOAD', label: 'Download', icon: Download, hint: 'Share a brochure, deck or PDF. Downloading completes it.' },
+  { value: 'VIDEO', label: 'Video', icon: PlayCircle, hint: 'Show a YouTube, Vimeo or direct video.' },
+  { value: 'CUSTOM_CTA', label: 'Custom CTA', icon: MousePointerClick, hint: 'A button that sends attendees to any link.' },
 ]
 
 const QUIZ_TYPE_LABELS: Record<QuizType, string> = {
@@ -107,6 +110,8 @@ export const emptyState = (): FormState => ({
   surveyQuestions: [blankQuestion()],
   downloadName: '',
   downloadUrl: '',
+  downloadSource: 'UPLOAD',
+  downloadSize: 0,
   videoUrl: '',
   videoDuration: '',
   raffleName: '',
@@ -153,6 +158,9 @@ export function stateFromActivity(a: any): FormState {
   }
   s.downloadName = a.downloadName || ''
   s.downloadUrl = a.downloadUrl || ''
+  // Files uploaded here are served from /api/assets; anything else is an external link
+  s.downloadSource = !s.downloadUrl || s.downloadUrl.startsWith('/api/assets/') ? 'UPLOAD' : 'LINK'
+  s.downloadSize = settings.fileSize || 0
   s.videoUrl = a.videoUrl || ''
   s.videoDuration = a.videoDuration ? String(a.videoDuration) : ''
   s.raffleName = a.raffleName || ''
@@ -228,9 +236,12 @@ export function buildPayload(s: FormState): { error?: string; payload?: any } {
   }
 
   if (s.type === 'DOWNLOAD') {
-    if (!s.downloadUrl.trim()) return { error: 'Enter the download URL' }
-    payload.downloadName = s.downloadName.trim()
+    if (!s.downloadUrl.trim()) {
+      return { error: s.downloadSource === 'UPLOAD' ? 'Upload the file attendees will download' : 'Enter the download link' }
+    }
+    payload.downloadName = s.downloadName.trim() || 'Download'
     payload.downloadUrl = s.downloadUrl.trim()
+    payload.settings = { fileSize: s.downloadSource === 'UPLOAD' ? s.downloadSize : 0 }
   }
 
   if (s.type === 'VIDEO') {
@@ -271,7 +282,6 @@ export default function ActivityForm({ zones, initial, submitLabel, submittingLa
   const [submitting, setSubmitting] = useState(false)
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setS((prev) => ({ ...prev, [key]: value }))
-  const typeInfo = ACTIVITY_TYPES.find((t) => t.value === s.type)
 
   // Choice list helpers, shared by quiz answers and poll options
   const updateChoice = (key: 'answers' | 'pollOptions', id: string, patch: Partial<Choice>) =>
@@ -375,12 +385,29 @@ export default function ActivityForm({ zones, initial, submitLabel, submittingLa
 
       <div>
         <label className={labelClass}>Activity Type <span className="text-red-400">*</span></label>
-        <select value={s.type} onChange={(e) => set('type', e.target.value as ActivityType)} className={inputClass}>
-          {ACTIVITY_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
-          ))}
-        </select>
-        {typeInfo && <p className="text-xs text-gray-400 mt-2">{typeInfo.hint}</p>}
+        <div role="radiogroup" aria-label="Activity type" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {ACTIVITY_TYPES.map((t) => {
+            const Icon = t.icon
+            const selected = s.type === t.value
+            return (
+              <button
+                key={t.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => set('type', t.value)}
+                className={`relative text-left p-3 rounded-lg border transition-all ${
+                  selected ? 'border-[#00CBB3] bg-[#00CBB3]/10 ring-2 ring-[#00CBB3]/30' : 'border-white/15 bg-[#16123D]/40 hover:border-white/30'
+                }`}
+              >
+                {selected && <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-[#00CBB3]" />}
+                <Icon className={`w-5 h-5 mb-2 ${selected ? 'text-[#00CBB3]' : 'text-gray-300'}`} />
+                <p className="text-sm font-semibold text-white">{t.label}</p>
+                <p className="text-xs text-gray-400 mt-1 leading-snug">{t.hint}</p>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div>
@@ -599,14 +626,48 @@ export default function ActivityForm({ zones, initial, submitLabel, submittingLa
       {/* DOWNLOAD */}
       {s.type === 'DOWNLOAD' && (
         <div className={panelClass}>
-          <div>
-            <label className={labelClass}>File name</label>
-            <input type="text" value={s.downloadName} onChange={(e) => set('downloadName', e.target.value)} className={inputClass} placeholder="e.g. Event brochure.pdf" />
+          <div className="flex gap-2">
+            {(['UPLOAD', 'LINK'] as const).map((source) => (
+              <button
+                key={source}
+                type="button"
+                onClick={() => setS((prev) => ({ ...prev, downloadSource: source, downloadUrl: '', downloadSize: 0 }))}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                  s.downloadSource === source ? 'border-[#00CBB3] bg-[#00CBB3]/10 text-white' : 'border-white/15 text-gray-300 hover:border-white/30'
+                }`}
+              >
+                {source === 'UPLOAD' ? 'Upload a file' : 'Link to a file'}
+              </button>
+            ))}
           </div>
+          {s.downloadSource === 'UPLOAD' ? (
+            <div>
+              <label className={labelClass}>File</label>
+              <FileUpload
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.png,.jpg,.jpeg,.txt,.csv"
+                hint="PDF, Word, PowerPoint, Excel, ZIP or image, up to 10 MB"
+                value={s.downloadUrl ? { url: s.downloadUrl, name: s.downloadName, size: s.downloadSize } : null}
+                onChange={(file) =>
+                  setS((prev) => ({
+                    ...prev,
+                    downloadUrl: file?.url || '',
+                    downloadSize: file?.size || 0,
+                    downloadName: file ? prev.downloadName || file.name : prev.downloadName,
+                  }))
+                }
+              />
+            </div>
+          ) : (
+            <div>
+              <label className={labelClass}>File link</label>
+              <input type="url" value={s.downloadUrl} onChange={(e) => set('downloadUrl', e.target.value)} className={inputClass} placeholder="https://..." />
+            </div>
+          )}
           <div>
-            <label className={labelClass}>File URL</label>
-            <input type="url" value={s.downloadUrl} onChange={(e) => set('downloadUrl', e.target.value)} className={inputClass} placeholder="https://..." />
+            <label className={labelClass}>Name shown to attendees</label>
+            <input type="text" value={s.downloadName} onChange={(e) => set('downloadName', e.target.value)} className={inputClass} placeholder="e.g. Product brochure" />
           </div>
+          <p className="text-xs text-gray-400">Attendees earn the booth points as soon as they download the file.</p>
         </div>
       )}
 

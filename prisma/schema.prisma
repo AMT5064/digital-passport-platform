@@ -21,6 +21,8 @@ model User {
   designation   String?
   avatar        String?
   role          UserRole    @default(ATTENDEE)
+  // Answers to the event's custom registration questions, keyed by field id
+  registrationData Json?
   eventId       String?
   event         Event?      @relation("EventAttendees", fields: [eventId], references: [id], onDelete: SetNull)
   createdAt     DateTime    @default(now())
@@ -268,6 +270,8 @@ model RegistrationConfig {
   requiredFields  Json        @default("[]")  // ["firstName", "lastName", "email", etc]
   optionalFields  Json        @default("[]")
   hiddenFields    Json        @default("[]")
+  customFields    Json        @default("[]")  // [{id, label, type: TEXT|SELECT|CHECKBOX, options, required}]
+  welcomeText     String?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 }
@@ -332,4 +336,14 @@ enum ScanMode {
   ONE_SCAN      // Only once per event
   DAILY         // Once per day per zone
   UNLIMITED     // Multiple times allowed
+}
+
+// Files uploaded by admins (event banners, logos, download activities), served by /api/assets/[id]
+model Asset {
+  id              String      @id @default(cuid())
+  name            String
+  mimeType        String
+  size            Int
+  data            Bytes
+  createdAt       DateTime    @default(now())
 }

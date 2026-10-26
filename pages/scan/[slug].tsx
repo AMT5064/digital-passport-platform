@@ -3,12 +3,14 @@ import { useRouter } from 'next/router'
 import { useSession } from 'next-auth/react'
 import axios from 'axios'
 import Link from 'next/link'
+import { formatBytes } from '@/lib/upload'
+import { contrastText } from '@/lib/utils'
 import { ArrowLeft, CheckCircle2, XCircle, Download, Ticket, ExternalLink, Star, PlayCircle } from 'lucide-react'
 
 interface ZoneData {
   zone: { id: string; name: string; description: string; image: string; points: number }
   activities: any[]
-  event: { id: string; name: string; themeColor: string }
+  event: { id: string; name: string; themeColor: string; bannerImage: string | null; logo: string | null }
   completion: { pointsEarned: number; completedAt: string } | null
 }
 
@@ -74,6 +76,8 @@ export default function ScanPage() {
   }, [slug])
 
   const activity = zoneData?.activities?.[0]
+  const color = zoneData?.event.themeColor || '#00CBB3'
+  const brandButton = { backgroundColor: color, color: contrastText(color) }
   const settings = activity?.settings || {}
   const quizMulti = settings.quizType === 'MULTIPLE'
   const pollMulti = settings.pollType === 'MULTIPLE'
@@ -143,11 +147,16 @@ export default function ScanPage() {
     // Bring the attendee back to this booth after they sign in or register
     const callbackUrl = encodeURIComponent(router.asPath)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] to-[#16123D] px-4">
-        <div className="bg-white/5 border border-white/10 backdrop-blur rounded-2xl p-8 text-center max-w-sm w-full">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#201751] to-[#16123D] px-4 py-8">
+        <div className="bg-white/5 border border-white/10 backdrop-blur rounded-2xl overflow-hidden text-center max-w-md w-full">
+          {zoneData?.event.bannerImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={zoneData.event.bannerImage} alt={zoneData.event.name} className="w-full aspect-[8/3] object-cover" />
+          )}
+          <div className="p-8">
           {zoneData && (
             <>
-              <p className="text-xs uppercase tracking-wide text-[#00CBB3] mb-1">{zoneData.event.name}</p>
+              <p className="text-xs uppercase tracking-wide mb-1" style={{ color }}>{zoneData.event.name}</p>
               <h2 className="text-2xl font-oswald font-bold mb-2 text-white">{zoneData.zone.name}</h2>
               <p className="text-gray-300 text-sm mb-6">
                 Sign in to complete this booth and earn <strong className="text-[#FFB800]">{zoneData.zone.points} points</strong>.
@@ -156,17 +165,19 @@ export default function ScanPage() {
           )}
           {!zoneData && <h2 className="text-2xl font-oswald font-bold mb-6 text-white">Sign in to continue</h2>}
           <button
-            onClick={() => router.push(`/login?callbackUrl=${callbackUrl}`)}
-            className="w-full bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] py-3 rounded-lg font-semibold transition-colors mb-3"
+            onClick={() => router.push(zoneData ? `/register?event=${zoneData.event.id}&callbackUrl=${callbackUrl}` : `/register?callbackUrl=${callbackUrl}`)}
+            className="w-full py-3 rounded-lg font-semibold transition-all hover:brightness-110 mb-3"
+            style={brandButton}
           >
-            Sign In
+            First time here? Get your passport
           </button>
           <button
-            onClick={() => router.push(`/register?callbackUrl=${callbackUrl}`)}
+            onClick={() => router.push(`/login?callbackUrl=${callbackUrl}`)}
             className="w-full border border-white/20 hover:bg-white/5 text-white py-3 rounded-lg font-semibold transition-colors"
           >
-            First time here? Create an account
+            I already have an account
           </button>
+          </div>
         </div>
       </div>
     )
@@ -296,6 +307,13 @@ export default function ScanPage() {
         </div>
       </header>
 
+      {zoneData.event.bannerImage && (
+        <div className="max-w-lg mx-auto sm:px-4 sm:pt-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={zoneData.event.bannerImage} alt={zoneData.event.name} className="w-full aspect-[8/3] object-cover sm:rounded-2xl" />
+        </div>
+      )}
+
       <div className="max-w-lg mx-auto px-4 py-6">
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>
@@ -348,17 +366,23 @@ export default function ScanPage() {
             {activity?.type === 'VIDEO' && <VideoBlock activity={activity} />}
             {activity?.type === 'RAFFLE' && <RaffleBlock activity={activity} />}
             {activity?.type === 'CUSTOM_CTA' && <CtaBlock activity={activity} />}
-            {activity?.type === 'DOWNLOAD' && <DownloadBlock activity={activity} />}
+            {activity?.type === 'DOWNLOAD' && (
+              <DownloadBlock activity={activity} submitting={submitting} onDownloaded={handleCompleteActivity} buttonStyle={brandButton} />
+            )}
 
             {validationError && <p className="text-red-400 text-xs mt-3">{validationError}</p>}
 
-            <button
-              onClick={handleCompleteActivity}
-              disabled={submitting}
-              className="w-full bg-[#00CBB3] hover:bg-[#009B8A] disabled:opacity-50 text-[#16123D] py-3 rounded-lg font-semibold mt-6 transition-colors"
-            >
-              {submitting ? 'Submitting...' : activity?.type === 'QUIZ' ? 'Submit Answer' : activity?.type === 'POLL' ? 'Submit Vote' : 'Complete Activity'}
-            </button>
+            {/* A download completes itself when the attendee downloads the file */}
+            {activity?.type !== 'DOWNLOAD' && (
+              <button
+                onClick={handleCompleteActivity}
+                disabled={submitting}
+                className="w-full disabled:opacity-50 py-3 rounded-lg font-semibold mt-6 transition-all hover:brightness-110"
+                style={brandButton}
+              >
+                {submitting ? 'Submitting...' : activity?.type === 'QUIZ' ? 'Submit Answer' : activity?.type === 'POLL' ? 'Submit Vote' : 'Complete Activity'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -600,7 +624,18 @@ function CtaBlock({ activity }: any) {
   )
 }
 
-function DownloadBlock({ activity }: any) {
+function DownloadBlock({
+  activity,
+  submitting,
+  onDownloaded,
+  buttonStyle,
+}: {
+  activity: any
+  submitting: boolean
+  onDownloaded: () => void
+  buttonStyle: React.CSSProperties
+}) {
+  const size = activity.settings?.fileSize
   return (
     <div>
       <h3 className="font-bold mb-3">{activity.title || 'Download'}</h3>
@@ -610,10 +645,16 @@ function DownloadBlock({ activity }: any) {
           download
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 bg-[#16123D]/60 border border-white/10 rounded-lg p-4 hover:border-[#00CBB3]/40 transition-colors"
+          // The browser starts the download from the link; recording it awards the booth points
+          onClick={() => !submitting && onDownloaded()}
+          className="flex items-center gap-3 rounded-lg p-4 transition-all hover:brightness-110"
+          style={buttonStyle}
         >
-          <Download className="w-6 h-6 text-[#00CBB3] flex-shrink-0" />
-          <span className="text-sm truncate">{activity.downloadName || 'Download file'}</span>
+          <Download className="w-6 h-6 flex-shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold truncate">{submitting ? 'Saving your download...' : activity.downloadName || 'Download file'}</span>
+            {size ? <span className="block text-xs opacity-80">{formatBytes(size)}</span> : null}
+          </span>
         </a>
       )}
     </div>

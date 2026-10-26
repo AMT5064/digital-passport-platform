@@ -80,6 +80,12 @@ export default function EventsPage() {
       })
 
       if (response.ok) {
+        // A new event goes straight to branding and registration setup
+        if (!editingId) {
+          const created = await response.json()
+          router.push(`/admin/campaign/${created.id}/branding?new=1`)
+          return
+        }
         fetchEvents()
         setShowForm(false)
         setEditingId(null)

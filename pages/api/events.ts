@@ -54,7 +54,7 @@ export default async function handler(
 
   if (req.method === 'PUT') {
     try {
-      const { id, name, description, startDate, endDate, venue, status, themeColor } = req.body
+      const { id, name, description, startDate, endDate, venue, status, themeColor, bannerImage, logo } = req.body
 
       if (!id) {
         return res.status(400).json({ error: 'Event ID required' })
@@ -70,6 +70,9 @@ export default async function handler(
           ...(venue !== undefined && { venue }),
           ...(status && { status }),
           ...(themeColor && { themeColor }),
+          // null clears an image, undefined leaves it alone
+          ...(bannerImage !== undefined && { bannerImage }),
+          ...(logo !== undefined && { logo }),
         },
       })
 

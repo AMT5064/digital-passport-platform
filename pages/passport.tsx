@@ -12,7 +12,7 @@ interface DashboardData {
   zonesCompleted: number
   zonesTotal: number
   badges: any[]
-  event: { id: string; name: string } | null
+  event: { id: string; name: string; bannerImage: string | null; themeColor: string } | null
 }
 
 export default function PassportPage() {
@@ -89,10 +89,20 @@ export default function PassportPage() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Welcome Card */}
-        <div className="bg-gradient-to-br from-[#16123D]/60 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-2xl p-5">
-          <h2 className="text-xl font-oswald font-bold mb-1 truncate">Welcome, {dashboard.user.name}!</h2>
-          <p className="text-gray-400 text-sm truncate">{dashboard.user.email}</p>
-          {dashboard.event && <p className="text-[#00CBB3] text-xs mt-2 truncate">{dashboard.event.name}</p>}
+        <div className="bg-gradient-to-br from-[#16123D]/60 to-[#7600FF]/10 backdrop-blur border border-white/10 rounded-2xl overflow-hidden">
+          {dashboard.event?.bannerImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={dashboard.event.bannerImage} alt={dashboard.event.name} className="w-full aspect-[8/3] object-cover" />
+          )}
+          <div className="p-5">
+            <h2 className="text-xl font-oswald font-bold mb-1 truncate">Welcome, {dashboard.user.name}!</h2>
+            <p className="text-gray-400 text-sm truncate">{dashboard.user.email}</p>
+            {dashboard.event && (
+              <p className="text-xs mt-2 truncate font-semibold" style={{ color: dashboard.event.themeColor || '#00CBB3' }}>
+                {dashboard.event.name}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Stats Grid */}

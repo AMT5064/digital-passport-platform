@@ -90,3 +90,12 @@ export function getReadableDistance(date: Date): string {
 export function safeCallbackUrl(value: unknown): string {
   return typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') ? value : ''
 }
+
+// Picks dark or white text so it stays readable on a button of the given hex colour
+export function contrastText(hex: string): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '')
+  if (!m) return '#16123D'
+  const n = parseInt(m[1], 16)
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#16123D' : '#FFFFFF'
+}

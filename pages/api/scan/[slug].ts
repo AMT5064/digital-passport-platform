@@ -62,6 +62,8 @@ export default async function handler(
             id: zone.event.id,
             name: zone.event.name,
             themeColor: zone.event.themeColor,
+            bannerImage: zone.event.bannerImage,
+            logo: zone.event.logo,
           },
           completion: previousScan,
         },

@@ -9,6 +9,7 @@ import {
   Users,
   BarChart3,
   Settings,
+  Palette,
   Plus,
   Edit2,
   Trash2,
@@ -190,7 +191,14 @@ export default function CampaignDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href={`/admin/campaign/${campaignId}/settings`}>
+            <Link
+              href={`/admin/campaign/${campaignId}/branding`}
+              className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold"
+            >
+              <Palette className="w-5 h-5 text-[#00CBB3]" />
+              <span className="hidden sm:inline">Branding & Registration</span>
+            </Link>
+            <Link href={`/admin/campaign/${campaignId}/settings`} aria-label="Campaign settings">
               <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                 <Settings className="w-6 h-6" />
               </button>

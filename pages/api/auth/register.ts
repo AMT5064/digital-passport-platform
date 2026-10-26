@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcrypt'
 import { ApiResponse } from '@/types'
+import { checkRegistration, registrationFormFromConfig } from '@/lib/registration'
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,7 +13,7 @@ export default async function handler(
   }
 
   try {
-    const { email, firstName, lastName, password, mobile, company, designation, eventId } =
+    const { email, firstName, lastName, password, mobile, company, designation, eventId, registrationData } =
       req.body
 
     if (!email || !firstName || !lastName || !password) {
@@ -20,6 +21,29 @@ export default async function handler(
         success: false,
         error: 'Missing required fields',
       })
+    }
+
+    // When registering for a specific event, apply that event's form rules
+    let answers: Record<string, string | boolean> | undefined
+    const event = eventId
+      ? await prisma.event.findUnique({ where: { id: String(eventId) }, include: { registrationConfig: true } })
+      : null
+    if (eventId) {
+      if (!event) {
+        return res.status(400).json({ success: false, error: 'Event not found' })
+      }
+      const form = registrationFormFromConfig(event.registrationConfig)
+      const problem = checkRegistration(form, req.body)
+      if (problem) {
+        return res.status(400).json({ success: false, error: problem })
+      }
+      // Keep only answers to this event's own questions
+      answers = {}
+      for (const c of form.customFields) {
+        const value = registrationData?.[c.id]
+        if (c.type === 'CHECKBOX') answers[c.id] = value === true
+        else if (value) answers[c.id] = String(value).slice(0, 500)
+      }
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -44,7 +68,8 @@ export default async function handler(
         mobile,
         company,
         designation,
-        eventId,
+        eventId: event?.id,
+        ...(answers && { registrationData: answers }),
         role: 'ATTENDEE',
       },
     })
