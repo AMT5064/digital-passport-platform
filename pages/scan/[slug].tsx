@@ -78,6 +78,8 @@ export default function ScanPage() {
   const activity = zoneData?.activities?.[0]
   const color = zoneData?.event.themeColor || '#00CBB3'
   const brandButton = { backgroundColor: color, color: contrastText(color) }
+  // Admins open booths from the Test button to check them; they have no passport to earn points on
+  const isAdminPreview = !!session?.user?.role && session.user.role !== 'ATTENDEE'
   const settings = activity?.settings || {}
   const quizMulti = settings.quizType === 'MULTIPLE'
   const pollMulti = settings.pollType === 'MULTIPLE'
@@ -99,7 +101,7 @@ export default function ScanPage() {
   }
 
   const handleCompleteActivity = async () => {
-    if (!session?.user || !zoneData) return
+    if (!session?.user || !zoneData || isAdminPreview) return
 
     const message = validate()
     if (message) {
@@ -316,6 +318,11 @@ export default function ScanPage() {
       )}
 
       <div className="max-w-lg mx-auto px-4 py-6">
+        {isAdminPreview && (
+          <div className="mb-4 px-4 py-3 rounded-lg bg-[#FFB800]/15 border border-[#FFB800]/40 text-sm text-[#FFD36B]">
+            <strong>Admin preview.</strong> This is exactly what attendees see after scanning. Sign in as an attendee to complete it and earn points.
+          </div>
+        )}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-300 px-4 py-3 rounded-lg mb-4 text-sm">{error}</div>
         )}
@@ -377,7 +384,7 @@ export default function ScanPage() {
             {activity?.type !== 'DOWNLOAD' && (
               <button
                 onClick={handleCompleteActivity}
-                disabled={submitting}
+                disabled={submitting || isAdminPreview}
                 className="w-full disabled:opacity-50 py-3 rounded-lg font-semibold mt-6 transition-all hover:brightness-110"
                 style={brandButton}
               >

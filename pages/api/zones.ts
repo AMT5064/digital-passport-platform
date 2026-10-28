@@ -35,18 +35,29 @@ export default async function handler(
     try {
       const { eventId, name, description, qrSlug, points } = req.body
 
-      if (!eventId || !name || !qrSlug) {
-        return res.status(400).json({ error: 'Missing required fields' })
+      if (!eventId || !name?.trim()) {
+        return res.status(400).json({ error: 'Booth name is required' })
       }
       if (!ensureEventAccess(session, res, eventId)) return
+
+      // The QR code ID is optional: it's made from the booth name plus a short random tail
+      const clean = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
+      let slug = qrSlug ? clean(String(qrSlug)) : ''
+      if (slug && (await prisma.zone.findUnique({ where: { qrSlug: slug }, select: { id: true } }))) {
+        return res.status(409).json({ error: `The QR code ID "${slug}" is already used by another booth` })
+      }
+      for (let i = 0; !slug && i < 5; i++) {
+        const candidate = `${clean(name) || 'booth'}-${Math.random().toString(36).slice(2, 6)}`
+        if (!(await prisma.zone.findUnique({ where: { qrSlug: candidate }, select: { id: true } }))) slug = candidate
+      }
 
       const zone = await prisma.zone.create({
         data: {
           eventId,
-          name,
+          name: name.trim(),
           description: description || '',
-          qrSlug,
-          points: points || 10,
+          qrSlug: slug,
+          points: Number.isFinite(Number(points)) ? Math.max(0, Number(points)) : 10,
           active: true,
         },
       })

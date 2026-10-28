@@ -85,15 +85,15 @@ export function SetupChecklist({ eventId, stats }: { eventId: string; stats: Cam
   const steps = [
     { done: true, title: 'Create the event', text: 'Name, dates and venue are set.', href: '/admin/events', cta: 'Edit details' },
     { done: setup.hasBranding, title: 'Brand it & design registration', text: 'Banner, colours and the fields attendees fill in.', href: `/admin/campaign/${eventId}/branding`, cta: 'Open branding' },
-    { done: setup.zones > 0, title: 'Add booths', text: 'One per touchpoint. Each gets its own QR code and points.', href: `/admin/campaign/${eventId}/zones/new`, cta: 'Add a booth' },
+    { done: setup.zones > 0, title: 'Add booths', text: 'One per touchpoint. Each gets its own QR code and points.', href: `/admin/campaign/${eventId}?tab=booths`, cta: 'Add booths' },
     {
       done: setup.zones > 0 && setup.zonesWithoutActivity.length === 0,
       title: 'Give every booth an activity',
       text: setup.zonesWithoutActivity.length ? `Missing: ${setup.zonesWithoutActivity.join(', ')}` : 'Quiz, poll, survey, download, video, raffle or link.',
-      href: `/admin/campaign/${eventId}/activities/new`,
-      cta: 'Add an activity',
+      href: `/admin/campaign/${eventId}?tab=booths`,
+      cta: 'Open booths',
     },
-    { done: totals.registered > 0, title: 'Print QR codes & share the registration link', text: 'Download each booth QR from the Zones tab.', href: `/admin/campaign/${eventId}?tab=zones`, cta: 'Get QR codes' },
+    { done: totals.registered > 0, title: 'Print QR signs & share the registration link', text: 'One printable sign per booth plus a registration poster, in one PDF.', href: `/admin/campaign/${eventId}/print`, cta: 'Print signs' },
     { done: totals.scans > 0, title: 'Go live', text: 'Put the leaderboard on a big screen and watch it fill up.', href: `/screen/${eventId}`, cta: 'Open screen', external: true },
   ]
   const doneCount = steps.filter((s) => s.done).length
@@ -157,13 +157,14 @@ export function StatTiles({ stats }: { stats: CampaignStats }) {
     { icon: Trophy, color: '#E11D48', label: 'Points awarded', value: t.pointsAwarded.toLocaleString(), hint: `max ${t.maxPoints} per person` },
   ]
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    // Compact on phones so the booths are reachable without scrolling past the numbers
+    <div className="grid grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
       {tiles.map((x) => (
-        <div key={x.label} className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <x.icon className="w-5 h-5 mb-2" style={{ color: x.color }} />
-          <p className="text-2xl font-bold leading-none">{x.value}</p>
-          <p className="text-xs text-gray-400 mt-1.5">{x.label}</p>
-          {x.hint && <p className="text-[11px] text-gray-500">{x.hint}</p>}
+        <div key={x.label} className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4">
+          <x.icon className="w-4 h-4 sm:w-5 sm:h-5 mb-1.5 sm:mb-2" style={{ color: x.color }} />
+          <p className="text-xl sm:text-2xl font-bold leading-none">{x.value}</p>
+          <p className="text-[11px] sm:text-xs text-gray-400 mt-1 sm:mt-1.5 leading-tight">{x.label}</p>
+          {x.hint && <p className="hidden sm:block text-[11px] text-gray-500">{x.hint}</p>}
         </div>
       ))}
     </div>
@@ -414,6 +415,51 @@ function Bars({ items, total }: { items: { label: string; count: number }[]; tot
           </div>
         </div>
       ))}
+    </div>
+  )
+}
+
+// The run-of-show for setup day and the event itself, with the links each step needs
+export function EventDayChecklist({ eventId, stats }: { eventId: string; stats: CampaignStats }) {
+  const firstBooth = stats.zones[0]
+  const items = [
+    { when: 'Day before', text: `Print the signs: ${stats.zones.length} booth${stats.zones.length === 1 ? '' : 's'} plus the registration poster. A4 for stands, A5 for table tents.` },
+    { when: 'Day before', text: 'Brief booth staff: attendees scan, complete the activity, and points appear instantly.' },
+    { when: 'Setup', text: 'Place each sign at eye level near the booth entrance, away from glare. Put the registration poster at the main entrance.' },
+    { when: 'Setup', text: 'Scan every sign with a phone to check it opens the right booth. Use Test on each booth card for a quick preview.' },
+    { when: 'Setup', text: 'Open the big screen on the venue display, press full screen, and check it refreshes.' },
+    { when: 'Live', text: 'Watch the Leaderboard and Analytics tabs. A booth with few visits may need a better sign position.' },
+    { when: 'After', text: 'Export participants and responses for follow-up, then announce the winners from the leaderboard.' },
+  ]
+  return (
+    <div className={card}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-lg font-oswald font-bold">Event-day checklist</h3>
+          <p className="text-xs text-gray-400">What to do on the ground, in order.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/admin/campaign/${eventId}/print`} className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg bg-[#00CBB3] text-[#16123D] font-semibold">
+            Print signs
+          </Link>
+          {firstBooth && (
+            <a href={`/scan/${firstBooth.qrSlug}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border border-white/15 hover:bg-white/5">
+              Test a booth
+            </a>
+          )}
+          <a href={`/screen/${eventId}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm px-3 py-2 rounded-lg border border-white/15 hover:bg-white/5">
+            <Monitor className="w-4 h-4" /> Big screen
+          </a>
+        </div>
+      </div>
+      <ol className="space-y-2">
+        {items.map((it, i) => (
+          <li key={i} className="flex gap-3 text-sm">
+            <span className="w-24 flex-shrink-0 text-[11px] font-bold tracking-wide text-[#00CBB3] uppercase pt-0.5">{it.when}</span>
+            <span className="text-gray-300">{it.text}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }

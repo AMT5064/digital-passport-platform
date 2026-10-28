@@ -274,9 +274,11 @@ interface Props {
   submittingLabel: string
   cancelHref: string
   onSubmit: (payload: any) => Promise<string | void>
+  // When editing, the activity's own booth stays selectable
+  currentActivityId?: string
 }
 
-export default function ActivityForm({ zones, initial, submitLabel, submittingLabel, cancelHref, onSubmit }: Props) {
+export default function ActivityForm({ zones, initial, submitLabel, submittingLabel, cancelHref, onSubmit, currentActivityId }: Props) {
   const [s, setS] = useState<FormState>(initial || emptyState())
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -369,16 +371,22 @@ export default function ActivityForm({ zones, initial, submitLabel, submittingLa
       )}
 
       <div>
-        <label className={labelClass}>Zone <span className="text-red-400">*</span></label>
+        <label className={labelClass}>Booth <span className="text-red-400">*</span></label>
         <select value={s.zoneId} onChange={(e) => set('zoneId', e.target.value)} className={inputClass}>
-          <option value="">Select a zone</option>
-          {zones.map((z) => (
-            <option key={z.id} value={z.id}>{z.name}</option>
-          ))}
+          <option value="">Select a booth</option>
+          {zones.map((z) => {
+            // Each booth has one activity; booths that already have one are shown but can't be picked
+            const taken = (z.activities || []).some((a: any) => a.id !== currentActivityId)
+            return (
+              <option key={z.id} value={z.id} disabled={taken}>
+                {z.name} · {z.points} pts{taken ? ' (already has an activity)' : ''}
+              </option>
+            )
+          })}
         </select>
         {zones.length === 0 && (
           <p className="text-sm text-yellow-400 mt-2 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4" /> No zones yet. Create a zone first.
+            <AlertCircle className="w-4 h-4" /> No booths yet. Add a booth first.
           </p>
         )}
       </div>

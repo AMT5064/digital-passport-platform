@@ -54,9 +54,13 @@ export default async function handler(
       }
       if (!ensureEventAccess(session, res, eventId)) return
       // The zone must belong to the same event
-      const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true } })
-      if (zone?.eventId !== eventId) {
+      const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true, _count: { select: { activities: true } } } })
+      if (!zone || zone.eventId !== eventId) {
         return res.status(400).json({ error: 'That zone is not part of this event' })
+      }
+      // Attendees only ever see a booth's first activity, so a second one would be silently ignored
+      if (zone._count.activities > 0) {
+        return res.status(409).json({ error: 'This booth already has an activity. Edit that one instead.' })
       }
 
       const activity = await prisma.activity.create({
@@ -100,12 +104,15 @@ export default async function handler(
       if (!id) {
         return res.status(400).json({ error: 'Activity ID required' })
       }
-      const existing = await prisma.activity.findUnique({ where: { id }, select: { eventId: true } })
+      const existing = await prisma.activity.findUnique({ where: { id }, select: { eventId: true, zoneId: true } })
       if (!ensureEventAccess(session, res, existing?.eventId)) return
-      if (zoneId) {
-        const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true } })
-        if (zone?.eventId !== existing?.eventId) {
+      if (zoneId && zoneId !== existing?.zoneId) {
+        const zone = await prisma.zone.findUnique({ where: { id: zoneId }, select: { eventId: true, _count: { select: { activities: true } } } })
+        if (!zone || zone.eventId !== existing?.eventId) {
           return res.status(400).json({ error: 'That zone is not part of this event' })
+        }
+        if (zone._count.activities > 0) {
+          return res.status(409).json({ error: 'That booth already has an activity' })
         }
       }
 

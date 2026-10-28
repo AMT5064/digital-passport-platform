@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { ArrowLeft, Gamepad2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import ActivityForm, { stateFromActivity } from '@/components/admin/ActivityForm'
+import AdminHeader from '@/components/admin/AdminHeader'
 
 export default function EditActivityPage() {
   const { status } = useSession()
@@ -40,7 +41,7 @@ export default function EditActivityPage() {
         const data = await response.json()
         return data.error || 'Failed to update activity'
       }
-      router.push(`/admin/campaign/${campaignId}?tab=activities`)
+      router.push(`/admin/campaign/${campaignId}?tab=booths`)
     } catch (err: any) {
       return err.message || 'Error updating activity'
     }
@@ -55,36 +56,28 @@ export default function EditActivityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
-      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <Link href={`/admin/campaign/${campaignId}?tab=activities`}>
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Gamepad2 className="w-8 h-8 text-[#00CBB3]" />
-            <div>
-              <h1 className="text-2xl font-oswald font-bold">Edit Activity</h1>
-              <p className="text-sm text-gray-400">Update this activity</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+      <AdminHeader />
       <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 sm:p-8">
+        <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
+          <ArrowLeft className="w-4 h-4" /> Back to booths
+        </Link>
+        <h1 className="text-2xl font-oswald font-bold mb-1">Edit activity</h1>
+        <p className="text-sm text-gray-400 mb-6">
+          {activity?.zone?.name ? `At ${activity.zone.name}. ` : ''}Changes show to attendees straight away; answers already given are kept.
+        </p>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8">
           {loadError ? (
             <p className="text-red-300 text-sm">{loadError}</p>
           ) : (
             <ActivityForm
               zones={zones}
               initial={stateFromActivity(activity)}
-              submitLabel="Save Changes"
+              submitLabel="Save changes"
               submittingLabel="Saving..."
-              cancelHref={`/admin/campaign/${campaignId}?tab=activities`}
+              cancelHref={`/admin/campaign/${campaignId}?tab=booths`}
               onSubmit={handleSubmit}
+              currentActivityId={activity.id}
             />
           )}
         </div>

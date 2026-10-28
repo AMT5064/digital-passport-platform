@@ -1,101 +1,67 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, AlertCircle, Download } from 'lucide-react'
-import QRCode from 'qrcode.react'
+import { ArrowLeft, AlertCircle, Download, Printer, Link2, ExternalLink, Check, Plus, Pencil } from 'lucide-react'
+import AdminHeader from '@/components/admin/AdminHeader'
+import BoothQR from '@/components/admin/BoothQR'
+import { boothUrl, downloadQr } from '@/lib/qr'
 
-export default function EditZonePage() {
+const POINT_PRESETS = [5, 10, 15, 20, 25, 50]
+
+export default function EditBoothPage() {
   const { status } = useSession()
   const router = useRouter()
   const { id: campaignId, zoneId } = router.query
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    qrSlug: '',
-    points: 10,
-  })
-  const qrRef = useRef<HTMLDivElement>(null)
+  const [copied, setCopied] = useState(false)
+  const [zone, setZone] = useState<any>(null)
+  const [formData, setFormData] = useState({ name: '', description: '', points: 10 })
 
   useEffect(() => {
-    if (zoneId) fetchZone()
-  }, [zoneId])
+    if (status === 'unauthenticated') router.push('/login')
+  }, [status, router])
 
-  const fetchZone = async () => {
-    try {
-      const res = await fetch(`/api/zones?eventId=${campaignId}`)
-      const zones = await res.json()
-      const zone = (Array.isArray(zones) ? zones : []).find((z: any) => z.id === zoneId)
-      if (zone) {
-        setFormData({
-          name: zone.name || '',
-          description: zone.description || '',
-          qrSlug: zone.qrSlug || '',
-          points: zone.points || 10,
-        })
-      } else {
-        setError('Zone not found')
-      }
-    } catch (err) {
-      setError('Failed to load zone')
-    } finally {
-      setFetching(false)
-    }
-  }
+  useEffect(() => {
+    if (!campaignId || !zoneId) return
+    fetch(`/api/zones?eventId=${campaignId}`)
+      .then((r) => r.json())
+      .then((zones) => {
+        const z = (Array.isArray(zones) ? zones : []).find((x: any) => x.id === zoneId)
+        if (!z) throw new Error('Booth not found')
+        setZone(z)
+        setFormData({ name: z.name || '', description: z.description || '', points: z.points ?? 10 })
+      })
+      .catch((err) => setError(err.message || 'Failed to load booth'))
+      .finally(() => setFetching(false))
+  }, [campaignId, zoneId])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    if (!formData.name.trim()) {
+      setError('Booth name is required')
+      return
+    }
     setLoading(true)
-
     try {
-      if (!formData.name) {
-        setError('Zone name is required')
-        setLoading(false)
-        return
-      }
-
       const response = await fetch('/api/zones', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: zoneId,
-          name: formData.name,
-          description: formData.description,
-          points: formData.points,
-        }),
+        body: JSON.stringify({ id: zoneId, ...formData, name: formData.name.trim() }),
       })
-
       if (!response.ok) {
-        const data = await response.json()
-        setError(data.error || 'Failed to update zone')
+        setError((await response.json()).error || 'Failed to update booth')
         setLoading(false)
         return
       }
-
-      router.push(`/admin/campaign/${campaignId}?tab=zones`)
+      router.push(`/admin/campaign/${campaignId}?tab=booths`)
     } catch (err: any) {
-      setError(err.message || 'Error updating zone')
+      setError(err.message || 'Error updating booth')
       setLoading(false)
     }
-  }
-
-  const downloadQR = () => {
-    const canvas = qrRef.current?.querySelector('canvas')
-    if (!canvas) return
-    const url = canvas.toDataURL('image/png')
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${formData.qrSlug || 'zone'}-qr.png`
-    a.click()
-  }
-
-  if (status === 'unauthenticated') {
-    router.push('/login')
-    return null
   }
 
   if (!campaignId || fetching) {
@@ -106,108 +72,119 @@ export default function EditZonePage() {
     )
   }
 
-  const scanUrl = formData.qrSlug && typeof window !== 'undefined' ? `${window.location.origin}/scan/${formData.qrSlug}` : ''
-  const inputClass = "w-full px-4 py-3 bg-[#16123D]/60 border border-white/20 rounded-lg text-white text-base placeholder-gray-500 focus:border-[#00CBB3] focus:outline-none focus:ring-2 focus:ring-[#00CBB3]/30 transition-all"
-  const disabledInputClass = "w-full px-4 py-3 bg-[#16123D]/30 border border-white/10 rounded-lg text-gray-400 text-base cursor-not-allowed"
-  const labelClass = "block text-sm font-semibold text-white mb-3"
+  const url = zone ? boothUrl(zone.qrSlug) : ''
+  const activity = zone?.activities?.[0]
+  const inputClass =
+    'w-full px-4 py-3 bg-[#16123D]/60 border border-white/20 rounded-lg text-white text-base placeholder-gray-500 focus:border-[#00CBB3] focus:outline-none focus:ring-2 focus:ring-[#00CBB3]/30 transition-all'
+  const labelClass = 'block text-sm font-semibold text-white mb-2'
+  const actionClass = 'flex items-center justify-center gap-2 py-2.5 rounded-lg border border-white/15 hover:bg-white/5 text-sm'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
-      <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
-          <Link href={`/admin/campaign/${campaignId}`}>
-            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-          </Link>
-          <div className="flex items-center gap-3">
-            <MapPin className="w-8 h-8 text-[#00CBB3]" />
-            <div>
-              <h1 className="text-2xl font-oswald font-bold">Edit Zone</h1>
-              <p className="text-sm text-gray-400">Update zone details & get QR code</p>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+      <AdminHeader />
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+        <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
+          <ArrowLeft className="w-4 h-4" /> Back to booths
+        </Link>
+        <h1 className="text-2xl font-oswald font-bold mb-6">Edit booth</h1>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <p className="text-red-300 text-sm">{error}</p>
           </div>
-        </div>
-      </header>
+        )}
 
-      <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="bg-gradient-to-br from-white/5 to-white/[0.02] backdrop-blur border border-white/10 rounded-xl p-6 sm:p-8">
-          {error && (
-            <div className="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-red-300 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className={labelClass}>Zone Name <span className="text-red-400">*</span></label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>QR Code Slug</label>
-              <input type="text" value={formData.qrSlug} disabled className={disabledInputClass} />
-              <p className="text-xs text-gray-400 mt-2">QR slug cannot be changed after creation</p>
-            </div>
-
-            {scanUrl && (
-              <div ref={qrRef} className="flex flex-col items-center gap-3 p-6 bg-white rounded-lg">
-                <QRCode value={scanUrl} size={180} fgColor="#16123D" />
-                <p className="text-xs text-[#16123D] break-all text-center">{scanUrl}</p>
-                <button
-                  type="button"
-                  onClick={downloadQR}
-                  className="flex items-center gap-2 bg-[#16123D] hover:bg-[#0f0c2e] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  <Download className="w-4 h-4" /> Download QR Code
-                </button>
+        {zone && (
+          <div className="grid md:grid-cols-[1fr_260px] gap-6 items-start">
+            <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+              <div>
+                <label className={labelClass}>Booth name</label>
+                <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={inputClass} />
               </div>
-            )}
+              <div>
+                <label className={labelClass}>Points for completing it</label>
+                <div className="flex flex-wrap gap-2">
+                  {POINT_PRESETS.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, points: p })}
+                      className={`px-4 py-2 rounded-lg border text-sm font-semibold ${formData.points === p ? 'border-[#00CBB3] bg-[#00CBB3]/15 text-[#00CBB3]' : 'border-white/15 hover:border-white/30'}`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min={0}
+                    value={formData.points}
+                    onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
+                    className="w-24 px-3 py-2 bg-[#16123D]/60 border border-white/20 rounded-lg text-white text-sm"
+                    aria-label="Custom points"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Changing points only affects completions from now on.</p>
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Notes <span className="text-gray-500 font-normal">(optional)</span>
+                </label>
+                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className={inputClass + ' resize-none'} rows={2} />
+              </div>
 
-            <div>
-              <label className={labelClass}>Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className={inputClass + " resize-none"}
-                rows={4}
-              />
-            </div>
+              <div className="p-4 rounded-lg bg-white/[0.03] border border-white/10 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Activity</p>
+                  <p className="text-sm font-semibold truncate">{activity ? `${activity.type} · ${activity.title}` : 'None yet'}</p>
+                </div>
+                <Link
+                  href={activity ? `/admin/campaign/${campaignId}/activities/${activity.id}/edit` : `/admin/campaign/${campaignId}/activities/new?zoneId=${zone.id}`}
+                  className="flex items-center gap-1.5 text-sm font-semibold text-[#00CBB3]"
+                >
+                  {activity ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {activity ? 'Edit' : 'Add'}
+                </Link>
+              </div>
 
-            <div>
-              <label className={labelClass}>Points Awarded</label>
-              <input
-                type="number"
-                value={formData.points}
-                onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) || 0 })}
-                className={inputClass}
-                min="0"
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-[#00CBB3] to-[#00CBB3] hover:from-[#009B8A] hover:to-[#009B8A] disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition-all font-semibold text-[#16123D] text-base"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
-              </button>
-              <Link href={`/admin/campaign/${campaignId}`} className="flex-1">
-                <button type="button" className="w-full bg-[#16123D] hover:bg-[#0f0c2e] px-6 py-3 rounded-lg transition-all font-semibold text-white text-base border border-white/20 hover:border-white/30">
-                  Cancel
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button type="submit" disabled={loading} className="flex-1 bg-[#00CBB3] hover:bg-[#009B8A] disabled:opacity-50 px-6 py-3 rounded-lg font-semibold text-[#16123D]">
+                  {loading ? 'Saving...' : 'Save changes'}
                 </button>
-              </Link>
-            </div>
-          </form>
-        </div>
+                <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="flex-1 text-center px-6 py-3 rounded-lg font-semibold border border-white/20 hover:bg-white/5">
+                  Cancel
+                </Link>
+              </div>
+            </form>
+
+            <aside className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3">
+              <p className="text-sm font-semibold">QR code</p>
+              <BoothQR value={url} size={220} className="mx-auto" />
+              <p className="text-[11px] text-gray-400 break-all text-center font-mono">{url}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => downloadQr(url, zone.name)} className={actionClass}>
+                  <Download className="w-4 h-4 text-[#00CBB3]" /> PNG
+                </button>
+                <Link href={`/admin/campaign/${campaignId}/print?zone=${zone.id}`} className={actionClass}>
+                  <Printer className="w-4 h-4 text-[#00CBB3]" /> Sign
+                </Link>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(url)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 1500)
+                  }}
+                  className={actionClass}
+                >
+                  {copied ? <Check className="w-4 h-4 text-[#00CBB3]" /> : <Link2 className="w-4 h-4 text-[#00CBB3]" />} {copied ? 'Copied' : 'Link'}
+                </button>
+                <a href={url} target="_blank" rel="noopener noreferrer" className={actionClass}>
+                  <ExternalLink className="w-4 h-4 text-[#00CBB3]" /> Test
+                </a>
+              </div>
+              <p className="text-[11px] text-gray-500">The code never changes, so signs you&apos;ve already printed keep working after edits.</p>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   )

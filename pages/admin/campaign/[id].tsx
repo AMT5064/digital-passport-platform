@@ -19,7 +19,11 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import AdminHeader from '@/components/admin/AdminHeader'
-import { AnalyticsPanel, CampaignStats, ExportButtons, LeaderboardPanel, SetupChecklist, StatTiles } from '@/components/admin/CampaignPanels'
+import { AnalyticsPanel, CampaignStats, EventDayChecklist, ExportButtons, LeaderboardPanel, SetupChecklist, StatTiles } from '@/components/admin/CampaignPanels'
+import BoothsPanel from '@/components/admin/BoothsPanel'
+
+// Booths and their activities live on one tab now; old links still land there
+const tabFromQuery = (tab: unknown) => (tab === 'zones' || tab === 'activities' ? 'booths' : typeof tab === 'string' ? tab : 'overview')
 
 interface Campaign {
   id: string
@@ -90,7 +94,7 @@ export default function CampaignDetailPage() {
   }
 
   const handleDeleteZone = async (id: string, name?: string) => {
-    if (!confirm('Delete this zone? All activities linked to this zone will also be deleted. This action cannot be undone.')) return
+    if (!confirm(`Delete the booth "${name}"? Its QR code will stop working and its activity is deleted too. This can't be undone.`)) return
     try {
       const res = await fetch(`/api/zones-delete?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
@@ -103,7 +107,7 @@ export default function CampaignDetailPage() {
   }
 
   const handleDeleteActivity = async (id: string, name?: string) => {
-    if (!confirm('Delete this activity? This action cannot be undone.')) return
+    if (!confirm(`Remove the activity "${name}" from its booth? You can add a new one afterwards.`)) return
     try {
       const res = await fetch(`/api/activities-delete?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
@@ -116,21 +120,19 @@ export default function CampaignDetailPage() {
   }
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/login')
-    } else if (campaignId) {
-      // Set active tab from query parameter if provided
-      if (router.query.tab) {
-        setActiveTab(router.query.tab as string)
-      }
-      fetchCampaignData()
-    }
-  }, [status, campaignId, router])
+    if (status === 'unauthenticated') router.push('/login')
+  }, [status, router])
+
+  // Load once the session is confirmed; loading during the session check fetched everything twice
+  useEffect(() => {
+    if (status === 'authenticated' && campaignId) fetchCampaignData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, campaignId])
 
   // Update tab when query parameter changes
   useEffect(() => {
     if (router.query.tab) {
-      setActiveTab(router.query.tab as string)
+      setActiveTab(tabFromQuery(router.query.tab))
     }
   }, [router.query.tab])
 
@@ -239,9 +241,8 @@ export default function CampaignDetailPage() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6 border-b border-white/10 pb-0 overflow-x-auto">
           {[
-            { id: 'overview', label: 'Overview', icon: Calendar },
-            { id: 'zones', label: 'Zones', icon: MapPin },
-            { id: 'activities', label: 'Activities', icon: Gamepad2 },
+            { id: 'overview', label: 'Setup', icon: Calendar },
+            { id: 'booths', label: `Booths & QR codes (${zones.length})`, icon: QrCode },
             { id: 'participants', label: 'Participants', icon: Users },
             { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
             { id: 'analytics', label: 'Analytics', icon: BarChart3 },
@@ -263,152 +264,27 @@ export default function CampaignDetailPage() {
 
         {/* Tab Content */}
         <div>
-          {activeTab === 'overview' && stats && <SetupChecklist eventId={campaignId as string} stats={stats} />}
-          {activeTab === 'zones' && <ZonesTab campaignId={campaignId as string} zones={zones} onDeleteZone={handleDeleteZone} onRefresh={fetchCampaignData} />}
-          {activeTab === 'activities' && <ActivitiesTab campaignId={campaignId as string} activities={activities} zones={zones} onDeleteActivity={handleDeleteActivity} onRefresh={fetchCampaignData} />}
+          {activeTab === 'overview' && stats && (
+            <div className="grid xl:grid-cols-2 gap-6 items-start">
+              <SetupChecklist eventId={campaignId as string} stats={stats} />
+              <EventDayChecklist eventId={campaignId as string} stats={stats} />
+            </div>
+          )}
+          {activeTab === 'booths' && (
+            <BoothsPanel
+              campaignId={campaignId as string}
+              eventName={campaign.name}
+              zones={zones}
+              onDeleteZone={handleDeleteZone}
+              onDeleteActivity={handleDeleteActivity}
+              onRefresh={fetchCampaignData}
+            />
+          )}
           {activeTab === 'participants' && <ParticipantsTab participants={participants} eventId={campaignId as string} />}
           {activeTab === 'leaderboard' && stats && <LeaderboardPanel eventId={campaignId as string} stats={stats} />}
           {activeTab === 'analytics' && stats && <AnalyticsPanel eventId={campaignId as string} stats={stats} />}
         </div>
       </div>
-    </div>
-  )
-}
-
-function ZonesTab({ campaignId, zones, onRefresh, onDeleteZone }: any) {
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-oswald font-bold">Zones</h3>
-        <Link href={`/admin/campaign/${campaignId}/zones/new`}>
-          <button className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg font-semibold transition-colors">
-            <Plus className="w-5 h-5" />
-            New Zone
-          </button>
-        </Link>
-      </div>
-
-      {zones.length === 0 ? (
-        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
-          <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
-          <p className="text-gray-400">No zones yet. Create one to get started!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {zones.map((zone) => (
-            <div key={zone.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold">{zone.name}</h4>
-                <span className="text-xs bg-[#00CBB3] text-[#16123D] px-2 py-1 rounded font-semibold">{zone.points} pts</span>
-              </div>
-              {zone.description && <p className="text-sm text-gray-400 mb-2">{zone.description}</p>}
-              <p className="text-xs text-gray-500 mb-3">QR: {zone.qrSlug}</p>
-              <div className="flex gap-2">
-                <Link href={`/admin/campaign/${campaignId}/zones/${zone.id}/edit`} className="flex-1">
-                  <button className="w-full flex items-center justify-center gap-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] hover:text-[#C68CFF] px-3 py-2 rounded text-sm transition-colors">
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </button>
-                </Link>
-                <button onClick={() => onDeleteZone(zone.id, zone.name)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function describeActivity(a: any): string {
-  const s = a.settings || {}
-  const count = (list: any) => (Array.isArray(list) ? list.length : 0)
-  switch (a.type) {
-    case 'QUIZ': {
-      const kind = s.quizType === 'MULTIPLE' ? 'Multiple correct' : s.quizType === 'TRUE_FALSE' ? 'True / False' : 'Single choice'
-      return `${kind} · ${count(a.answers)} answers${a.question ? ` · ${a.question}` : ''}`
-    }
-    case 'POLL':
-      return `${s.pollType === 'MULTIPLE' ? 'Multiple choice' : 'Single choice'} · ${count(a.pollOptions)} options${a.question ? ` · ${a.question}` : ''}`
-    case 'SURVEY':
-      return `${count(a.surveyQuestions)} ${count(a.surveyQuestions) === 1 ? 'question' : 'questions'}`
-    case 'RAFFLE':
-      return [a.raffleName, a.rafflePrize && `Prize: ${a.rafflePrize}`].filter(Boolean).join(' · ') || 'Raffle'
-    case 'DOWNLOAD':
-      return a.downloadName || a.downloadUrl || 'File download'
-    case 'VIDEO':
-      return a.videoUrl || 'Video'
-    case 'CUSTOM_CTA':
-      return a.ctaButtonText ? `Button: ${a.ctaButtonText}` : 'Custom link'
-    default:
-      return a.description || ''
-  }
-}
-
-function ActivitiesTab({ campaignId, activities, zones, onRefresh, onDeleteActivity }: any) {
-
-  const getActivityTypeBadge = (type: string) => {
-    const colors: Record<string, string> = {
-      QUIZ: 'bg-blue-600 text-white',
-      POLL: 'bg-purple-600 text-white',
-      SURVEY: 'bg-pink-600 text-white',
-      DOWNLOAD: 'bg-green-600 text-white',
-      VIDEO: 'bg-orange-600 text-white',
-      RAFFLE: 'bg-red-600 text-white',
-      CUSTOM_CTA: 'bg-cyan-600 text-white',
-    }
-    return colors[type] || 'bg-gray-600 text-white'
-  }
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-oswald font-bold">Activities</h3>
-        <Link href={`/admin/campaign/${campaignId}/activities/new`}>
-          <button className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg font-semibold transition-colors">
-            <Plus className="w-5 h-5" />
-            New Activity
-          </button>
-        </Link>
-      </div>
-
-      {activities.length === 0 ? (
-        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
-          <Gamepad2 className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
-          <p className="text-gray-400">No activities yet. Create one to engage participants!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activities.map((activity) => (
-            <div key={activity.id} className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-bold">{activity.title || 'Untitled Activity'}</h4>
-                  <p className="text-xs text-gray-500">{activity.zone?.name}</p>
-                </div>
-                <span className={`text-xs px-2 py-1 rounded font-semibold flex-shrink-0 ${getActivityTypeBadge(activity.type)}`}>{activity.type}</span>
-              </div>
-              <p className="text-xs text-gray-400 mb-3">{describeActivity(activity)}</p>
-              <div className="flex gap-2">
-                <Link href={`/admin/campaign/${campaignId}/activities/${activity.id}/edit`} className="flex-1">
-                  <button className="w-full flex items-center justify-center gap-1 bg-[#7600FF]/20 hover:bg-[#7600FF]/30 text-[#B266FF] hover:text-[#C68CFF] px-3 py-2 rounded text-sm transition-colors">
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </button>
-                </Link>
-                <button onClick={() => onDeleteActivity(activity.id, activity.title)} className="flex-1 flex items-center justify-center gap-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-3 py-2 rounded text-sm transition-colors">
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

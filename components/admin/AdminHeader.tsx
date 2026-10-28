@@ -6,7 +6,7 @@ import { LayoutDashboard, Calendar, Users, LogOut } from 'lucide-react'
 
 // Top bar shared by the admin pages
 export default function AdminHeader() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const isSuper = session?.user?.role === 'SUPER_ADMIN'
 
@@ -46,10 +46,13 @@ export default function AdminHeader() {
         </nav>
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-medium leading-tight">{session?.user?.name}</p>
-            <p className="text-[11px] text-gray-400">{isSuper ? 'Super admin · all events' : 'Event admin'}</p>
-          </div>
+          {/* Nothing until the session loads, so the role is never shown wrongly */}
+          {status === 'authenticated' && (
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium leading-tight">{session?.user?.name}</p>
+              <p className="text-[11px] text-gray-400">{isSuper ? 'Super admin · all events' : 'Event admin'}</p>
+            </div>
+          )}
           <button
             onClick={() => signOut({ redirect: false }).then(() => router.push('/login'))}
             className="p-2 hover:bg-white/10 rounded-lg transition-colors"

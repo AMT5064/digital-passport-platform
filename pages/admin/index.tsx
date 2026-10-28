@@ -65,10 +65,10 @@ const timeAgo = (iso: string) => {
 // What the organiser should do next for an event, in setup order
 function nextStep(e: EventSummary): { label: string; href: string } | null {
   if (!e.setup.hasBranding) return { label: 'Add banner & registration form', href: `/admin/campaign/${e.id}/branding` }
-  if (e.setup.zones === 0) return { label: 'Add your first booth', href: `/admin/campaign/${e.id}/zones/new` }
+  if (e.setup.zones === 0) return { label: 'Add your first booth', href: `/admin/campaign/${e.id}?tab=booths` }
   if (e.setup.zonesWithoutActivity.length > 0)
-    return { label: `Add an activity to ${e.setup.zonesWithoutActivity.length} booth${e.setup.zonesWithoutActivity.length > 1 ? 's' : ''}`, href: `/admin/campaign/${e.id}/activities/new` }
-  if (e.totals.registered === 0) return { label: 'Share the registration link & print QR codes', href: `/admin/campaign/${e.id}?tab=zones` }
+    return { label: `Add an activity to ${e.setup.zonesWithoutActivity.length} booth${e.setup.zonesWithoutActivity.length > 1 ? 's' : ''}`, href: `/admin/campaign/${e.id}?tab=booths` }
+  if (e.totals.registered === 0) return { label: 'Print QR signs & share the registration link', href: `/admin/campaign/${e.id}/print` }
   return null
 }
 
