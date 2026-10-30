@@ -16,10 +16,12 @@ import {
   PlayCircle,
   MousePointerClick,
   ListPlus,
+  MoreHorizontal,
   X,
   Check,
 } from 'lucide-react'
 import BoothQR from './BoothQR'
+import { EmptyState, Menu, MenuItem, btn, panel } from './ui'
 import { appOrigin, boothUrl, downloadQr, isLocalOrigin } from '@/lib/qr'
 
 const TYPE_INFO: Record<string, { label: string; icon: React.ElementType; color: string }> = {
@@ -59,52 +61,44 @@ export default function BoothsPanel({ campaignId, eventName, zones, onDeleteZone
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <div>
-          <h3 className="text-lg font-oswald font-bold">Booths</h3>
-          <p className="text-xs text-gray-400">
-            {booths.length} booth{booths.length === 1 ? '' : 's'} · {booths.length - missing.length} ready · up to {totalPoints} pts per attendee
-          </p>
-        </div>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <p className="text-sm text-gray-400">
+          {booths.length} booth{booths.length === 1 ? '' : 's'}
+          {booths.length > 0 && ` · up to ${totalPoints} points per attendee`}
+        </p>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href={`/admin/campaign/${campaignId}/zones/new`}
-            className="flex items-center gap-2 bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-4 py-2 rounded-lg font-semibold text-sm"
-          >
-            <Plus className="w-4 h-4" /> Add booth
-          </Link>
-          <button onClick={() => setBulkOpen(!bulkOpen)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 text-sm font-semibold">
-            <ListPlus className="w-4 h-4" /> Add several
-          </button>
           {booths.length > 0 && (
-            <Link
-              href={`/admin/campaign/${campaignId}/print`}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-white/20 hover:bg-white/5 text-sm font-semibold"
-            >
-              <Printer className="w-4 h-4" /> Print all QR signs
+            <Link href={`/admin/campaign/${campaignId}/print`} className={btn.secondary}>
+              <Printer className="w-4 h-4" /> Print all signs
             </Link>
           )}
+          <Link href={`/admin/campaign/${campaignId}/zones/new`} className={btn.primary}>
+            <Plus className="w-4 h-4" /> Add booth
+          </Link>
+          <Menu icon={<MoreHorizontal className="w-5 h-5" />}>
+            <MenuItem icon={ListPlus} onClick={() => setBulkOpen(true)}>
+              Add several booths at once
+            </MenuItem>
+          </Menu>
         </div>
       </div>
 
-      {local && (
-        <div className="p-3 rounded-lg bg-[#FFB800]/10 border border-[#FFB800]/30 text-sm text-[#FFD36B] flex gap-2">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          These QR codes point to {appOrigin()}, which phones at the venue can&apos;t reach. Download and print them from the live site.
-        </div>
-      )}
-
-      {missing.length > 0 && booths.length > 0 && (
-        <div className="p-3 rounded-lg bg-[#FFB800]/10 border border-[#FFB800]/30 text-sm text-[#FFD36B] flex flex-wrap items-center gap-2">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span className="flex-1 min-w-0">
-            {missing.length} booth{missing.length > 1 ? 's have' : ' has'} no activity yet, so scanning {missing.length > 1 ? 'them' : 'it'} gives points for nothing: {missing.map((z) => z.name).join(', ')}
-          </span>
-          <Link href={`/admin/campaign/${campaignId}/activities/new?zoneId=${missing[0].id}`} className="font-semibold underline whitespace-nowrap">
-            Add activity to {missing[0].name}
-          </Link>
+      {(missing.length > 0 || local) && (
+        <div className="space-y-1.5 text-sm">
+          {missing.length > 0 && booths.length > 0 && (
+            <p className="flex items-start gap-2 text-[#FFD36B]">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              {missing.length === 1 ? `${missing[0].name} has no activity yet.` : `${missing.length} booths have no activity yet.`}
+            </p>
+          )}
+          {local && (
+            <p className="flex items-start gap-2 text-gray-500">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              You&apos;re on {appOrigin().replace(/^https?:\/\//, '')}, so these codes only work on this computer. Print from the live site.
+            </p>
+          )}
         </div>
       )}
 
@@ -120,89 +114,85 @@ export default function BoothsPanel({ campaignId, eventName, zones, onDeleteZone
       )}
 
       {booths.length === 0 ? (
-        <div className="bg-white/5 border border-dashed border-white/20 rounded-xl p-8 text-center space-y-3">
-          <p className="font-semibold">No booths yet</p>
-          <p className="text-sm text-gray-400 max-w-md mx-auto">
-            A booth is any touchpoint attendees visit: a stand, demo, desk or photo wall. Each one gets its own QR code and points. Add them one at
-            a time, or several at once.
-          </p>
-        </div>
+        <EmptyState
+          title="No booths yet"
+          text="A booth is any touchpoint attendees visit: a stand, demo, desk or photo wall. Each gets its own QR code and points."
+          action={
+            <Link href={`/admin/campaign/${campaignId}/zones/new`} className={btn.primary}>
+              <Plus className="w-4 h-4" /> Add your first booth
+            </Link>
+          }
+        />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {booths.map((zone, i) => {
             const activity = zone.activities?.[0]
             const info = activity ? TYPE_INFO[activity.type] : null
             const url = boothUrl(zone.qrSlug)
+            const visits = zone._count?.scans ?? 0
             return (
-              <div key={zone.id} className={`rounded-xl border overflow-hidden flex flex-col ${activity ? 'border-white/10 bg-white/[0.04]' : 'border-[#FFB800]/40 bg-[#FFB800]/[0.04]'}`}>
-                <div className="p-4 flex gap-4">
-                  <BoothQR value={url} size={128} className="flex-shrink-0" />
-                  <div className="flex-1 min-w-0 flex flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-[11px] text-gray-500 font-semibold">BOOTH {i + 1}</p>
-                        <h4 className="text-base font-bold leading-tight truncate" title={zone.name}>{zone.name}</h4>
-                      </div>
-                      <span className="text-xs bg-[#FFB800]/20 text-[#FFD36B] px-2 py-1 rounded-full font-bold whitespace-nowrap">{zone.points} pts</span>
-                    </div>
-
+              <div key={zone.id} className={`${panel} p-4 flex flex-col gap-4 ${activity ? '' : 'ring-[#FFB800]/40'}`}>
+                <div className="flex gap-4">
+                  <BoothQR value={url} size={96} className="flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-gray-500">Booth {i + 1} · {zone.points} pts</p>
+                    <h4 className="text-[15px] font-poppins font-semibold text-white leading-snug mt-0.5 line-clamp-2" title={zone.name}>
+                      {zone.name}
+                    </h4>
                     {activity && info ? (
-                      <div className="mt-2 flex items-center gap-2 text-sm min-w-0">
-                        <info.icon className="w-4 h-4 flex-shrink-0" style={{ color: info.color }} />
-                        <span className="text-xs font-semibold" style={{ color: info.color }}>{info.label}</span>
-                        <span className="text-gray-300 truncate">{activity.title}</span>
-                      </div>
+                      <p className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-400 min-w-0">
+                        <info.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: info.color }} />
+                        <span className="truncate">
+                          {info.label} · {activity.title}
+                        </span>
+                      </p>
                     ) : (
                       <Link
                         href={`/admin/campaign/${campaignId}/activities/new?zoneId=${zone.id}`}
-                        className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FFD36B] hover:underline"
+                        className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-[#FFD36B] hover:text-[#FFE39B]"
                       >
-                        <Plus className="w-4 h-4" /> Add an activity
+                        <Plus className="w-3.5 h-3.5" /> Add an activity
                       </Link>
                     )}
-
-                    <p className="mt-auto pt-2 text-xs text-gray-400">
-                      {zone._count?.scans ?? 0} visit{(zone._count?.scans ?? 0) === 1 ? '' : 's'} · <span className="font-mono">{zone.qrSlug}</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {visits} visit{visits === 1 ? '' : 's'}
                     </p>
                   </div>
                 </div>
 
-                {/* QR actions, the things you need on setup day */}
-                <div className="grid grid-cols-4 border-t border-white/10 text-xs">
-                  <QrAction icon={Download} label="PNG" onClick={() => downloadQr(url, `${eventName}-${i + 1}-${zone.name}`)} />
-                  <QrAction icon={Printer} label="Print" href={`/admin/campaign/${campaignId}/print?zone=${zone.id}`} />
-                  <QrAction icon={copied === zone.id ? Check : Link2} label={copied === zone.id ? 'Copied' : 'Link'} onClick={() => copy(url, zone.id)} />
-                  <QrAction icon={ExternalLink} label="Test" href={url} external />
-                </div>
-
-                <div className="flex border-t border-white/10 text-xs">
-                  <Link href={`/admin/campaign/${campaignId}/zones/${zone.id}/edit`} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 hover:bg-white/5 text-gray-300">
-                    <Pencil className="w-3.5 h-3.5" /> Booth
-                  </Link>
-                  {activity && (
-                    <Link
-                      href={`/admin/campaign/${campaignId}/activities/${activity.id}/edit`}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 hover:bg-white/5 text-gray-300 border-l border-white/10"
-                    >
-                      <Pencil className="w-3.5 h-3.5" /> Activity
-                    </Link>
-                  )}
-                  {activity && (
-                    <button
-                      onClick={() => onDeleteActivity(activity.id, activity.title)}
-                      className="px-3 flex items-center justify-center gap-1.5 hover:bg-red-500/10 text-red-300 border-l border-white/10"
-                      title="Remove activity"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => onDeleteZone(zone.id, zone.name)}
-                    className="px-3 flex items-center justify-center gap-1.5 hover:bg-red-500/10 text-red-300 border-l border-white/10"
-                    title="Delete booth"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1 -mx-1 -mb-1">
+                  <button onClick={() => downloadQr(url, `${eventName}-${i + 1}-${zone.name}`)} className={btn.ghost + ' !px-2.5 text-xs'} title="Download the QR code as a PNG">
+                    <Download className="w-4 h-4" /> QR
                   </button>
+                  <Link href={`/admin/campaign/${campaignId}/print?zone=${zone.id}`} className={btn.ghost + ' !px-2.5 text-xs'} title="Print this booth's sign">
+                    <Printer className="w-4 h-4" /> Sign
+                  </Link>
+                  <a href={url} target="_blank" rel="noopener noreferrer" className={btn.ghost + ' !px-2.5 text-xs'} title="Open the booth as an attendee would see it">
+                    <ExternalLink className="w-4 h-4" /> Test
+                  </a>
+                  <span className="flex-1" />
+                  <Link href={`/admin/campaign/${campaignId}/zones/${zone.id}/edit`} className={btn.icon} title="Edit booth" aria-label="Edit booth">
+                    <Pencil className="w-4 h-4" />
+                  </Link>
+                  <Menu icon={<MoreHorizontal className="w-4 h-4" />}>
+                    {activity && (
+                      <MenuItem icon={Pencil} href={`/admin/campaign/${campaignId}/activities/${activity.id}/edit`}>
+                        Edit activity
+                      </MenuItem>
+                    )}
+                    <MenuItem icon={copied === zone.id ? Check : Link2} onClick={() => copy(url, zone.id)}>
+                      Copy booth link
+                    </MenuItem>
+                    <div className="my-1.5 border-t border-white/[0.08]" />
+                    {activity && (
+                      <MenuItem icon={X} onClick={() => onDeleteActivity(activity.id, activity.title)} danger>
+                        Remove activity
+                      </MenuItem>
+                    )}
+                    <MenuItem icon={Trash2} onClick={() => onDeleteZone(zone.id, zone.name)} danger>
+                      Delete booth
+                    </MenuItem>
+                  </Menu>
                 </div>
               </div>
             )
@@ -210,26 +200,6 @@ export default function BoothsPanel({ campaignId, eventName, zones, onDeleteZone
         </div>
       )}
     </div>
-  )
-}
-
-function QrAction({ icon: Icon, label, onClick, href, external }: { icon: React.ElementType; label: string; onClick?: () => void; href?: string; external?: boolean }) {
-  const cls = 'flex flex-col items-center justify-center gap-1 py-2.5 hover:bg-white/5 text-gray-200 border-r border-white/10 last:border-r-0'
-  if (href) {
-    return external ? (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
-        <Icon className="w-4 h-4 text-[#00CBB3]" /> {label}
-      </a>
-    ) : (
-      <Link href={href} className={cls}>
-        <Icon className="w-4 h-4 text-[#00CBB3]" /> {label}
-      </Link>
-    )
-  }
-  return (
-    <button onClick={onClick} className={cls}>
-      <Icon className="w-4 h-4 text-[#00CBB3]" /> {label}
-    </button>
   )
 }
 
@@ -269,7 +239,7 @@ function BulkAdd({ campaignId, onClose, onDone }: { campaignId: string; onClose:
   }
 
   return (
-    <div className="p-5 rounded-xl border border-[#00CBB3]/40 bg-[#00CBB3]/5 space-y-3">
+    <div className={`${panel} p-5 space-y-3`}>
       <div className="flex items-center justify-between">
         <p className="font-semibold">Add several booths</p>
         <button onClick={onClose} className="p-1 hover:bg-white/10 rounded" aria-label="Close">

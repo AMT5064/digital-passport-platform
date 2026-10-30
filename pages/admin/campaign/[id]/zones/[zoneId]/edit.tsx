@@ -66,7 +66,7 @@ export default function EditBoothPage() {
 
   if (!campaignId || fetching) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+      <div className="min-h-screen bg-[#16123D] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
@@ -80,7 +80,7 @@ export default function EditBoothPage() {
   const actionClass = 'flex items-center justify-center gap-2 py-2.5 rounded-lg border border-white/15 hover:bg-white/5 text-sm'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+    <div className="min-h-screen bg-[#16123D] text-white font-poppins pb-12">
       <AdminHeader />
       <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
         <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
@@ -97,7 +97,7 @@ export default function EditBoothPage() {
 
         {zone && (
           <div className="grid md:grid-cols-[1fr_260px] gap-6 items-start">
-            <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl p-6 space-y-6">
               <div>
                 <label className={labelClass}>Booth name</label>
                 <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={inputClass} />
@@ -156,7 +156,7 @@ export default function EditBoothPage() {
               </div>
             </form>
 
-            <aside className="bg-white/5 border border-white/10 rounded-xl p-5 space-y-3">
+            <aside className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl p-5 space-y-3">
               <p className="text-sm font-semibold">QR code</p>
               <BoothQR value={url} size={220} className="mx-auto" />
               <p className="text-[11px] text-gray-400 break-all text-center font-mono">{url}</p>

@@ -55,7 +55,7 @@ export default function CreateBoothPage() {
   const labelClass = 'block text-sm font-semibold text-white mb-2'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+    <div className="min-h-screen bg-[#16123D] text-white font-poppins pb-12">
       <AdminHeader />
       <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8">
         <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
@@ -64,7 +64,7 @@ export default function CreateBoothPage() {
         <h1 className="text-2xl font-oswald font-bold">Add a booth</h1>
         <p className="text-sm text-gray-400 mb-6">Step 1 of 2: name it and set its points. Next you&apos;ll pick what attendees do there. The QR code is created for you.</p>
 
-        <form onSubmit={handleSubmit} className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl p-6 space-y-6">
           {error && (
             <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />

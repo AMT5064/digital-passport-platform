@@ -146,14 +146,14 @@ export default function BrandingPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+      <div className="min-h-screen bg-[#16123D] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-16">
+    <div className="min-h-screen bg-[#16123D] text-white font-poppins pb-16">
       <header className="border-b border-white/10 backdrop-blur-md sticky top-0 z-40 bg-gradient-to-r from-[#16123D]/80 to-[#201751]/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4">
           <Link href={`/admin/campaign/${campaignId}`} className="text-[#00CBB3]" aria-label="Back to campaign">

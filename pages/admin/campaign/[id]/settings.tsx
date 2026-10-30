@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { ArrowLeft, ShieldCheck, Palette, Users } from 'lucide-react'
-import AdminHeader from '@/components/admin/AdminHeader'
+import { AdminPage, PageTitle, panel } from '@/components/admin/ui'
 
 export default function CampaignSettingsPage() {
   const { data: session, status } = useSession()
@@ -18,49 +18,46 @@ export default function CampaignSettingsPage() {
   const isSuper = session?.user?.role === 'SUPER_ADMIN'
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
-      <AdminHeader />
-      <div className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-        <div>
-          <Link href={`/admin/campaign/${campaignId}`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
-            <ArrowLeft className="w-4 h-4" /> Back to event
-          </Link>
-          <h1 className="text-2xl font-oswald font-bold">Event settings</h1>
-        </div>
+    <AdminPage width="max-w-2xl">
+      <div>
+        <Link href={`/admin/campaign/${campaignId}`} className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-3">
+          <ArrowLeft className="w-4 h-4" /> Back to event
+        </Link>
+        <PageTitle title="Event settings" />
+      </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 space-y-4">
-          <h2 className="text-base font-semibold flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-[#00CBB3]" /> How scoring works
-          </h2>
-          <ul className="text-sm text-gray-300 space-y-2 list-disc pl-5">
+      <div className={`${panel} p-6 space-y-3`}>
+        <h2 className="text-[15px] font-poppins font-semibold text-white flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-gray-400" /> How scoring works
+        </h2>
+        <ul className="text-sm text-gray-400 space-y-2 list-disc pl-5">
             <li>Each attendee can complete each booth once. Scanning it again shows &quot;Already completed&quot;, so nobody can farm points.</li>
             <li>Finishing a booth earns its points. A wrong quiz answer earns 0 but still counts as visited.</li>
             <li>Equal points rank by who reached the score first, then who played fastest.</li>
-          </ul>
-        </div>
+        </ul>
+      </div>
 
         <div className="grid sm:grid-cols-2 gap-3">
-          <Link href={`/admin/campaign/${campaignId}/branding`} className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 flex items-center gap-3">
-            <Palette className="w-5 h-5 text-[#00CBB3]" />
+          <Link href={`/admin/campaign/${campaignId}/branding`} className={`${panel} p-4 hover:bg-white/[0.06] flex items-center gap-3`}>
+            <Palette className="w-5 h-5 text-gray-400" />
             <span className="text-sm">
-              <span className="font-semibold block">Branding & registration</span>
-              <span className="text-gray-400 text-xs">Banner, colours, form fields</span>
+              <span className="font-medium text-white block">Branding & registration</span>
+              <span className="text-gray-500 text-xs">Banner, colours, form fields</span>
             </span>
           </Link>
           {isSuper && (
-            <Link href="/admin/team" className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/30 flex items-center gap-3">
-              <Users className="w-5 h-5 text-[#00CBB3]" />
+            <Link href="/admin/team" className={`${panel} p-4 hover:bg-white/[0.06] flex items-center gap-3`}>
+              <Users className="w-5 h-5 text-gray-400" />
               <span className="text-sm">
-                <span className="font-semibold block">Event admins</span>
-                <span className="text-gray-400 text-xs">Give a teammate access to this event</span>
+                <span className="font-medium text-white block">Event admins</span>
+                <span className="text-gray-500 text-xs">Give a teammate access to this event</span>
               </span>
             </Link>
           )}
         </div>
 
         <ClearRecords eventId={campaignId as string} />
-      </div>
-    </div>
+    </AdminPage>
   )
 }
 
@@ -104,9 +101,9 @@ function ClearRecords({ eventId }: { eventId: string }) {
   }
 
   return (
-    <div className="border border-red-500/40 bg-red-500/5 rounded-xl p-6 sm:p-8 space-y-4">
+    <div className="rounded-2xl ring-1 ring-red-500/25 p-6 space-y-4">
       <div>
-        <h2 className="text-xl font-bold text-red-300">Danger zone: clear records</h2>
+        <h2 className="text-[15px] font-poppins font-semibold text-red-300">Clear records</h2>
         <p className="text-sm text-gray-400 mt-1">
           Deletes every booth completion, point, answer and leaderboard entry for this event, for example after a rehearsal. Booths, activities,
           branding and settings stay. Export anything you need first; this can&apos;t be undone.
@@ -123,14 +120,14 @@ function ClearRecords({ eventId }: { eventId: string }) {
         <input
           value={confirmName}
           onChange={(e) => setConfirmName(e.target.value)}
-          className="w-full px-4 py-3 bg-[#16123D]/60 border border-red-500/30 rounded-lg text-white focus:border-red-400 focus:outline-none"
+          className="w-full px-4 py-2.5 bg-white/[0.04] ring-1 ring-white/[0.08] rounded-lg text-white focus:ring-red-400/60 focus:outline-none"
         />
       </div>
       {message && <p className={`text-sm ${message.ok ? 'text-green-300' : 'text-red-300'}`}>{message.text}</p>}
       <button
         onClick={clear}
         disabled={busy || !eventName || confirmName.trim() !== eventName}
-        className="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-3 rounded-lg font-semibold"
+        className="bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 rounded-lg font-semibold text-sm"
       >
         {busy ? 'Clearing...' : 'Clear records'}
       </button>

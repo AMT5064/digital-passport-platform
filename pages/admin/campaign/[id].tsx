@@ -1,25 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import {
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  Gamepad2,
-  Users,
-  BarChart3,
-  Settings,
-  Palette,
-  Plus,
-  Edit2,
-  Trash2,
-  Trophy,
-  QrCode,
-  Monitor,
-} from 'lucide-react'
+import { ArrowLeft, Monitor, Printer, MoreHorizontal, Palette, Pencil, Settings, ExternalLink, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import AdminHeader from '@/components/admin/AdminHeader'
-import { AnalyticsPanel, CampaignStats, EventDayChecklist, ExportButtons, LeaderboardPanel, SetupChecklist, StatTiles } from '@/components/admin/CampaignPanels'
+import { AnalyticsPanel, CampaignStats, ExportMenu, LeaderboardPanel, OverviewPanel, SearchBox } from '@/components/admin/CampaignPanels'
+import { AdminPage, EmptyState, Menu, MenuItem, PageTitle, PhaseBadge, Spinner, btn, eventPhase, panel } from '@/components/admin/ui'
 import BoothsPanel from '@/components/admin/BoothsPanel'
 
 // Booths and their activities live on one tab now; old links still land there
@@ -39,13 +24,6 @@ interface Campaign {
     attendees: number
     scans: number
   }
-}
-
-interface TabContent {
-  id: string
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  component: React.ReactNode
 }
 
 export default function CampaignDetailPage() {
@@ -160,116 +138,108 @@ export default function CampaignDetailPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
-      </div>
-    )
-  }
+  if (status === 'loading' || loading) return <Spinner />
 
   if (!campaign) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-oswald font-bold mb-4">Campaign Not Found</h1>
-          <Link href="/admin">
-            <button className="bg-[#00CBB3] hover:bg-[#009B8A] text-[#16123D] px-6 py-2 rounded-lg font-semibold">
-              Back to Admin
-            </button>
-          </Link>
-        </div>
-      </div>
+      <AdminPage>
+        <EmptyState
+          title="Event not found"
+          text="It may have been deleted, or you don't have access to it."
+          action={
+            <Link href="/admin" className={btn.primary}>
+              Back to dashboard
+            </Link>
+          }
+        />
+      </AdminPage>
     )
   }
 
+  const fmt = (d: string) => new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'booths', label: 'Booths', count: zones.length },
+    { id: 'participants', label: 'People', count: participants.length },
+    { id: 'leaderboard', label: 'Leaderboard' },
+    { id: 'analytics', label: 'Analytics' },
+  ]
+  const selectTab = (tab: string) => {
+    setActiveTab(tab)
+    router.replace({ pathname: router.pathname, query: { id: campaignId, ...(tab === 'overview' ? {} : { tab }) } }, undefined, { shallow: true })
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins">
-      <AdminHeader />
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-4 min-w-0">
-            <Link href="/admin" aria-label="Back to dashboard">
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <ArrowLeft className="w-6 h-6" />
-              </button>
-            </Link>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-oswald font-bold truncate">{campaign.name}</h1>
-              <p className="text-xs text-gray-400 truncate">{campaign.venue}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <a
-              href={`/screen/${campaignId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#00CBB3] text-[#16123D] text-sm font-semibold"
-            >
-              <Monitor className="w-5 h-5" />
-              <span>Big screen</span>
-            </a>
-            <Link
-              href={`/admin/campaign/${campaignId}/branding`}
-              className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-lg transition-colors text-sm font-semibold"
-            >
-              <Palette className="w-5 h-5 text-[#00CBB3]" />
-              <span className="hidden sm:inline">Branding & Registration</span>
-            </Link>
-            <Link href={`/admin/campaign/${campaignId}/settings`} aria-label="Campaign settings">
-              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <Settings className="w-6 h-6" />
-              </button>
-            </Link>
-            {isSuper && (
-              <button onClick={handleDeleteCampaign} className="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-red-400 hover:text-red-300" aria-label="Delete event">
-                <Trash2 className="w-6 h-6" />
-              </button>
-            )}
-          </div>
-        </div>
+    <AdminPage>
+      <div>
+        <Link href="/admin" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-3">
+          <ArrowLeft className="w-4 h-4" /> All events
+        </Link>
+        <PageTitle
+          title={
+            <span className="flex items-center gap-3 flex-wrap">
+              {campaign.name} <PhaseBadge phase={eventPhase(campaign.startDate, campaign.endDate)} />
+            </span>
+          }
+          subtitle={
+            <>
+              {fmt(campaign.startDate)} – {fmt(campaign.endDate)}
+              {campaign.venue && ` · ${campaign.venue}`}
+            </>
+          }
+          actions={
+            <>
+              <a href={`/screen/${campaignId}`} target="_blank" rel="noopener noreferrer" className={btn.secondary}>
+                <Monitor className="w-4 h-4" /> Big screen
+              </a>
+              <Link href={`/admin/campaign/${campaignId}/print`} className={btn.secondary}>
+                <Printer className="w-4 h-4" /> Print signs
+              </Link>
+              <Menu icon={<MoreHorizontal className="w-5 h-5" />}>
+                <MenuItem icon={Palette} href={`/admin/campaign/${campaignId}/branding`}>
+                  Branding & registration form
+                </MenuItem>
+                <MenuItem icon={Pencil} href={`/admin/events?edit=${campaignId}`}>
+                  Edit name, dates & venue
+                </MenuItem>
+                <MenuItem icon={Settings} href={`/admin/campaign/${campaignId}/settings`}>
+                  Settings & clear records
+                </MenuItem>
+                <MenuItem icon={ExternalLink} href={`/register?event=${campaignId}`} external>
+                  Preview registration page
+                </MenuItem>
+                {isSuper && (
+                  <>
+                    <div className="my-1.5 border-t border-white/[0.08]" />
+                    <MenuItem icon={Trash2} onClick={handleDeleteCampaign} danger>
+                      Delete event
+                    </MenuItem>
+                  </>
+                )}
+              </Menu>
+            </>
+          }
+        />
       </div>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        {/* Quick Stats */}
-        {stats && (
-          <div className="mb-8">
-            <StatTiles stats={stats} />
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-white/10 pb-0 overflow-x-auto">
-          {[
-            { id: 'overview', label: 'Setup', icon: Calendar },
-            { id: 'booths', label: `Booths & QR codes (${zones.length})`, icon: QrCode },
-            { id: 'participants', label: 'Participants', icon: Users },
-            { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-          ].map((tab) => (
+      <div className="-mt-2">
+        <div className="flex gap-6 border-b border-white/[0.08] overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
+          {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium transition-all border-b-2 whitespace-nowrap ${
-                activeTab === tab.id
-                  ? 'border-[#00CBB3] text-[#00CBB3]'
-                  : 'border-transparent text-gray-400 hover:text-white'
+              onClick={() => selectTab(tab.id)}
+              className={`pb-3 -mb-px text-sm whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.id ? 'border-[#00CBB3] text-white font-medium' : 'border-transparent text-gray-400 hover:text-white'
               }`}
             >
-              <tab.icon className="w-5 h-5" />
               {tab.label}
+              {tab.count !== undefined && <span className="ml-1.5 text-xs text-gray-500">{tab.count}</span>}
             </button>
           ))}
         </div>
 
-        {/* Tab Content */}
-        <div>
-          {activeTab === 'overview' && stats && (
-            <div className="grid xl:grid-cols-2 gap-6 items-start">
-              <SetupChecklist eventId={campaignId as string} stats={stats} />
-              <EventDayChecklist eventId={campaignId as string} stats={stats} />
-            </div>
-          )}
+        <div className="pt-8">
+          {activeTab === 'overview' && stats && <OverviewPanel eventId={campaignId as string} stats={stats} onTab={selectTab} />}
           {activeTab === 'booths' && (
             <BoothsPanel
               campaignId={campaignId as string}
@@ -280,69 +250,65 @@ export default function CampaignDetailPage() {
               onRefresh={fetchCampaignData}
             />
           )}
-          {activeTab === 'participants' && <ParticipantsTab participants={participants} eventId={campaignId as string} />}
+          {activeTab === 'participants' && <ParticipantsTab participants={participants} eventId={campaignId as string} boothCount={zones.length} />}
           {activeTab === 'leaderboard' && stats && <LeaderboardPanel eventId={campaignId as string} stats={stats} />}
           {activeTab === 'analytics' && stats && <AnalyticsPanel eventId={campaignId as string} stats={stats} />}
         </div>
       </div>
-    </div>
+    </AdminPage>
   )
 }
 
-function ParticipantsTab({ participants, eventId }: any) {
-  const totalPoints = participants.reduce((sum: number, p: any) => sum + p.scans.reduce((s: number, scan: any) => s + scan.pointsEarned, 0), 0)
+function ParticipantsTab({ participants, eventId, boothCount }: { participants: any[]; eventId: string; boothCount: number }) {
+  const [query, setQuery] = useState('')
+  const q = query.trim().toLowerCase()
+  const shown = q ? participants.filter((p) => `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(q)) : participants
 
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <h3 className="text-lg font-bold">Participants ({participants.length})</h3>
-          <ExportButtons eventId={eventId} types={[{ type: 'participants', label: 'Export with registration answers' }]} />
-        </div>
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Participants</p>
-            <p className="text-2xl font-bold">{participants.length}</p>
-          </div>
-          <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
-            <p className="text-gray-400 text-sm mb-2">Total Points</p>
-            <p className="text-2xl font-bold">{totalPoints}</p>
-          </div>
-          <div className="bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-xl p-4">
-            <p className="text-gray-400 text-sm mb-2">Avg Points</p>
-            <p className="text-2xl font-bold">{participants.length > 0 ? Math.round(totalPoints / participants.length) : 0}</p>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <SearchBox value={query} onChange={setQuery} placeholder="Search by name or email" />
+        <ExportMenu eventId={eventId} only={['participants']} />
       </div>
 
       {participants.length === 0 ? (
-        <div className="bg-gradient-to-br from-[#7600FF]/10 to-[#00CBB3]/10 rounded-xl p-8 text-center">
-          <Users className="w-12 h-12 text-gray-400 mx-auto mb-3 opacity-50" />
-          <p className="text-gray-400">No participants yet</p>
-        </div>
+        <EmptyState title="No one has registered yet" text="Share the registration link or put the registration poster at the entrance." />
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-white/10">
-          <table className="w-full">
-            <thead className="bg-[#16123D]">
-              <tr>
-                <th className="px-6 py-3 text-left font-semibold">Name</th>
-                <th className="px-6 py-3 text-left font-semibold">Email</th>
-                <th className="px-6 py-3 text-left font-semibold">Scans</th>
-                <th className="px-6 py-3 text-left font-semibold">Points</th>
+        <div className={`${panel} overflow-x-auto`}>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500">
+                <th className="px-5 py-3 font-medium">Name</th>
+                <th className="px-3 py-3 font-medium hidden sm:table-cell">Email</th>
+                <th className="px-3 py-3 font-medium">Booths</th>
+                <th className="px-5 py-3 font-medium text-right">Points</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
-              {participants.map((p) => {
+            <tbody className="divide-y divide-white/[0.06]">
+              {shown.map((p) => {
                 const points = p.scans.reduce((s: number, scan: any) => s + scan.pointsEarned, 0)
                 return (
-                  <tr key={p.id} className="hover:bg-white/5">
-                    <td className="px-6 py-4 font-semibold">{p.firstName} {p.lastName}</td>
-                    <td className="px-6 py-4 text-sm text-gray-400">{p.email}</td>
-                    <td className="px-6 py-4 text-sm">{p.scans.length}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-[#FFB800]">{points}</td>
+                  <tr key={p.id} className="hover:bg-white/[0.02]">
+                    <td className="px-5 py-3 text-white">
+                      {p.firstName} {p.lastName}
+                      <span className="block sm:hidden text-xs text-gray-500">{p.email}</span>
+                    </td>
+                    <td className="px-3 py-3 text-gray-400 hidden sm:table-cell">{p.email}</td>
+                    <td className="px-3 py-3 text-gray-300 tabular-nums">
+                      {p.scans.length}
+                      <span className="text-gray-500"> / {boothCount}</span>
+                    </td>
+                    <td className="px-5 py-3 text-right font-semibold text-[#FFB800] tabular-nums">{points}</td>
                   </tr>
                 )
               })}
+              {shown.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-8 text-center text-gray-500">
+                    Nobody matches &quot;{query}&quot;
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

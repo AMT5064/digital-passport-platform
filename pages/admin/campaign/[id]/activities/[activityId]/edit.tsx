@@ -49,14 +49,14 @@ export default function EditActivityPage() {
 
   if (!campaignId || (!activity && !loadError)) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+      <div className="min-h-screen bg-[#16123D] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+    <div className="min-h-screen bg-[#16123D] text-white font-poppins pb-12">
       <AdminHeader />
       <div className="max-w-3xl mx-auto p-4 sm:p-6 lg:p-8">
         <Link href={`/admin/campaign/${campaignId}?tab=booths`} className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white mb-4">
@@ -66,7 +66,7 @@ export default function EditActivityPage() {
         <p className="text-sm text-gray-400 mb-6">
           {activity?.zone?.name ? `At ${activity.zone.name}. ` : ''}Changes show to attendees straight away; answers already given are kept.
         </p>
-        <div className="bg-white/5 border border-white/10 rounded-xl p-6 sm:p-8">
+        <div className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl p-6 sm:p-8">
           {loadError ? (
             <p className="text-red-300 text-sm">{loadError}</p>
           ) : (

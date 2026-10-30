@@ -121,14 +121,14 @@ export default function TeamPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] flex items-center justify-center">
+      <div className="min-h-screen bg-[#16123D] flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#00CBB3]/30 border-t-[#00CBB3] rounded-full animate-spin"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#201751] to-[#16123D] text-white font-poppins pb-12">
+    <div className="min-h-screen bg-[#16123D] text-white font-poppins pb-12">
       <AdminHeader />
       <main className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -178,7 +178,7 @@ export default function TeamPage() {
         )}
 
         {draft && (
-          <section className="bg-white/5 border border-white/10 rounded-xl p-5 sm:p-6 space-y-5">
+          <section className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl p-5 sm:p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-oswald font-bold">{draft.id ? 'Edit admin' : 'New admin'}</h2>
               <button onClick={() => setDraft(null)} className="p-2 hover:bg-white/10 rounded-lg" aria-label="Close">
@@ -288,7 +288,7 @@ export default function TeamPage() {
           </section>
         )}
 
-        <section className="bg-white/5 border border-white/10 rounded-xl divide-y divide-white/10">
+        <section className="bg-white/[0.035] ring-1 ring-white/[0.06] rounded-2xl divide-y divide-white/10">
           {admins.map((a) => {
             const me = a.id === session?.user?.id
             return (
